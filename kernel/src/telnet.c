@@ -350,39 +350,247 @@ int telnet(int nargs, char *args[]) {
 }
 
 
-int telnet2(int nargs, char *args[]) {
 
-    // Abrir conexión TELNET1
-    int dev = open(TELNET1, NULL, NULL);
-    if (dev == SYSERR) {
-        printf("Failed to open TELNET1\n");
-        return -1;
+/* Prototipos */
+static int assign_client_to_device(int client_id);
+static void telnet_client_task(int dev_index);
+
+static int telnet_index_to_devnum(int index) {
+    // Buscar en devtab el dispositivo TELNET correspondiente
+    for (int i = 0; i < NDEVS; i++) {
+        if (strncmp(devtab[i].dvname, "TELNET", 6) == 0 && 
+            devtab[i].dvminor == index) {
+            return i; // Devuelve el número de dispositivo real
+        }
+    }
+    return -1; // No encontrado
+}
+
+
+
+void telnet2(int nargs, char *args[]) {
+    // Inicializar estructuras
+    server_mutex = semcreate(1);
+    
+    /*for (int i = 0; i < MAX_TELNET_DEVICES; i++) {
+        ttytel[i].sem = semcreate(1);
+        ttytel[i].client_id = -1;
+        ttytel[i].active = FALSE;
+        ttytel[i].owner = -1;
+        ttytel[i].assigned = FALSE;
+    }*/
+
+    // Inicializar solo dispositivos TELNET
+    for (int i = 0; i < NDEVS; i++) {
+        if (strncmp(devtab[i].dvname, "TELNET", 6) == 0) {
+            int index = devtab[i].dvminor;
+            if (index >= 0 && index < MAX_TELNET_DEVICES) {
+                ttytel[index].sem = semcreate(1);
+                ttytel[index].client_id = -1;
+                ttytel[index].active = FALSE;
+                ttytel[index].owner = -1;
+                ttytel[index].assigned = FALSE;
+            }
+        }
     }
     
-    // Escribir mensaje de bienvenida
-    char *welcome = "Welcome to Xinu TELNET!\r\n> ";
-    write(dev, welcome, strlen(welcome));
+    // Iniciar servidor TELNET
+    if (telnet_start() <= 0) {
+        printf("ERROR: Failed to start TELNET server\n");
+        return;
+    }
     
-    // Leer comandos
-    char buffer[128];
+    printf("TELNET server started, waiting for connections...\n");
+    
     while (1) {
-        int n = read(dev, buffer, sizeof(buffer)-1);
-        if (n <= 0) break;
+        int client_id = telnet_accept();
+        if (client_id >= 0) {
+            printf("New client connected: %d\n", client_id);
+            
+            // Asignar a un dispositivo (devuelve número de dispositivo real)
+            int devnum = assign_client_to_device(client_id);
+            
+            if (devnum < 0) {
+                printf("No available devices, rejecting client %d\n", client_id);
+                telnet_close(client_id);
+                continue;
+            }
+            
+            // Obtener nombre del dispositivo
+            char* devname = devtab[devnum].dvname;
+            printf("Client %d assigned to %s\n", client_id, devname);
+            
+            // Crear tarea para este cliente
+            char task_name[16];
+            sprintf(task_name, "task_%s", devname);
+            
+            char devnum_str[4];
+            sprintf(devnum_str, "%d", devnum);
+            
+            pid32 task = create((void *)telnet_client_task,
+                              TELNET_CLIENT_STACK,
+                              TELNET_CLIENT_PRIO,
+                              task_name,
+                              1,
+                              devnum_str);
+            
+            if (task != SYSERR) {
+                resume(task);
+                printf("Created task %d for %s\n", task, devname);
+            } else {
+                printf("ERROR: Could not create task for %s\n", devname);
+                // Liberar el dispositivo
+                int index = devtab[devnum].dvminor;
+                wait(ttytel[index].sem);
+                ttytel[index].assigned = FALSE;
+                ttytel[index].active = FALSE;
+                ttytel[index].client_id = -1;
+                signal(ttytel[index].sem);
+                telnet_close(client_id);
+            }
+        }
+    }
+}
+
+
+
+
+
+static int assign_client_to_device(int client_id) {
+    wait(server_mutex);
+    
+    // Buscar por número de dispositivo (no por índice)
+    for (int i = 0; i < NDEVS; i++) {
+        // Solo considerar dispositivos TELNET
+        if (strncmp(devtab[i].dvname, "TELNET", 6) != 0) {
+            continue;
+        }
         
-        buffer[n] = '\0';
+        // Calcular índice basado en dvminor
+        int index = devtab[i].dvminor;
+        if (index < 0 || index >= MAX_TELNET_DEVICES) {
+            continue;
+        }
         
-        if (strstr(buffer, "exit")) {
-            write(dev, "Goodbye!\r\n", 10);
+        wait(ttytel[index].sem);
+        
+        if (!ttytel[index].assigned) {
+            ttytel[index].client_id = client_id;
+            ttytel[index].assigned = TRUE;
+            ttytel[index].active = TRUE;
+            
+            signal(ttytel[index].sem);
+            signal(server_mutex);
+            return i; // Devuelve el número de dispositivo real
+        }
+        
+        signal(ttytel[index].sem);
+    }
+    
+    signal(server_mutex);
+    return -1; // No hay dispositivos disponibles
+}
+
+static void telnet_client_task(int devnum) {
+    // Verificar que el dispositivo es válido
+    if (devnum < 0 || devnum >= NDEVS || 
+        strncmp(devtab[devnum].dvname, "TELNET", 6) != 0) {
+        printf("ERROR: Invalid device number %d\n", devnum);
+        return;
+    }
+    
+    int index = devtab[devnum].dvminor;
+    char* devname = devtab[devnum].dvname;
+    
+    // Abrir el dispositivo
+    if (open(devnum, NULL, NULL) == SYSERR) {
+        printf("ERROR: Could not open %s\n", devname);
+        return;
+    }
+    
+    // Mensaje de bienvenida
+    char welcome[64];
+    snprintf(welcome, sizeof(welcome), "\r\nConnected to %s\r\n> ", devname);
+    write(devnum, welcome, strlen(welcome));
+    
+    // Bucle principal de la tarea del cliente
+    while (1) {
+        wait(ttytel[index].sem);
+        if (!ttytel[index].active) {
+            signal(ttytel[index].sem);
             break;
         }
         
-        // Eco del comando
-        write(dev, buffer, n);
-        write(dev, "> ", 2);
+        // Leer comando del cliente
+        int n = read(devnum, ttytel[index].input_buffer, 
+                   sizeof(ttytel[index].input_buffer) - 1);
+        
+        signal(ttytel[index].sem);
+        
+        if (n <= 0) {
+            printf("Client disconnected from %s\n", devname);
+            break;
+        }
+        
+        ttytel[index].input_buffer[n] = '\0';
+        printf("%s received: %s", devname, ttytel[index].input_buffer);
+        
+        // Procesar comando
+        if (strstr(ttytel[index].input_buffer, "help")) {
+            char help_msg[] = "Available commands:\r\nhelp - Show this help\r\nexit - Disconnect\r\n> ";
+            write(devnum, help_msg, sizeof(help_msg) - 1);
+        }
+        else if (strstr(ttytel[index].input_buffer, "exit")) {
+            char goodbye[] = "Goodbye!\r\n";
+            write(devnum, goodbye, sizeof(goodbye) - 1);
+            break;
+        }
+        else {
+            // Eco del mensaje
+            write(devnum, "You wrote: ", 11);
+            write(devnum, ttytel[index].input_buffer, n);
+            write(devnum, "\r\n> ", 4);
+        }
     }
     
-    close(dev);
-    return OK;
+    // Limpieza antes de terminar
+    close(devnum);
+    
+    wait(ttytel[index].sem);
+    if (ttytel[index].active) {
+        telnet_close(ttytel[index].client_id);
+        ttytel[index].active = FALSE;
+        ttytel[index].assigned = FALSE;
+        ttytel[index].client_id = -1;
+    }
+    signal(ttytel[index].sem);
+    
+    printf("%s client task ending\n", devname);
 }
 
- 
+
+/* Función para asignar cliente a dispositivo (sin cambios) */
+
+
+static int assign_client_to_device(int client_id) {
+    wait(server_mutex);
+    
+    for (int i = 0; i < MAX_TELNET_DEVICES; i++) {
+        wait(ttytel[i].sem);
+        
+        if (!ttytel[i].assigned) {
+            ttytel[i].client_id = client_id;
+            ttytel[i].assigned = TRUE;
+            ttytel[i].active = TRUE;
+            
+            signal(ttytel[i].sem);
+            signal(server_mutex);
+            return i;  // Devuelve el índice del dispositivo
+        }
+        
+        signal(ttytel[i].sem);
+    }
+    
+    signal(server_mutex);
+    return -1;  // No hay dispositivos disponibles
+}
