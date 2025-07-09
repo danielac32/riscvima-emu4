@@ -23,30 +23,30 @@ shellcmd xsh_ps(int nargs, char *args[])
 
 
 	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
-		printf("Use: %s\n\n", args[0]);
-		printf("Description:\n");
-		printf("\tDisplays information about running processes\n");
-		printf("Options:\n");
-		printf("\t--help\t display this help and exit\n");
+		fprintf(stdout,"Use: %s\n\n", args[0]);
+		fprintf(stdout,"Description:\n");
+		fprintf(stdout,"\tDisplays information about running processes\n");
+		fprintf(stdout,"Options:\n");
+		fprintf(stdout,"\t--help\t display this help and exit\n");
 		return 0;
 	}
 
 	/* Check for valid number of arguments */
 
 	if (nargs > 1) {
-		fprintf(CONSOLE, "%s: too many arguments\n", args[0]);
-		fprintf(CONSOLE, "Try '%s --help' for more information\n",
+		fprintf(stdout, "%s: too many arguments\n", args[0]);
+		fprintf(stdout, "Try '%s --help' for more information\n",
 				args[0]);
 		return 1;
 	}
 
 	/* Print header for items from the process table */
 
-	printf("%3s %-16s %5s %10s %-10s %10s\n",
+	fprintf(stdout,"%3s %-16s %5s %10s %-10s %10s\n",
 		   "Pid", "Name", "State", "Stack Base",
 		   "Stack Ptr", "Stack Size");
 
-	printf("%3s %-16s %5s %10s %-10s %10s\n",
+	fprintf(stdout,"%3s %-16s %5s %10s %-10s %10s\n",
 		   "---", "----------------", "-----",
 		   "----------", "----------", "----------");
 
@@ -57,7 +57,7 @@ shellcmd xsh_ps(int nargs, char *args[])
 		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
 			continue;
 		}
-		printf("%3d %-16s %s 0x%08X 0x%08X %8d\n",
+		fprintf(stdout,"%3d %-16s %s 0x%08X 0x%08X %8d\n",
 			i, prptr->prname, pstate[(int)prptr->prstate], prptr->prstkbase,
 			prptr->prstkptr, prptr->prstklen);
 	}

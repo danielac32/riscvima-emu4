@@ -1,46 +1,24 @@
 /* xsh_echo.c - xsh_echo */
 #include <os.h>
- 
+#include <fat_filelib.h>
 
+shellcmd xsh_ls(int nargs, char *args[]) {
+    FL_DIR dirstat;
+    char *tmp = full_path("");
+    if (!tmp) return -1;
 
-shellcmd xsh_ls(int nargs, char *args[]){
-
-return 0;
-}
-
-
-
-#if 0
-#include <os.h>
-#include <littlefs.h>
- 
-shellcmd xsh_ls(int nargs, char *args[])
-{
-	struct lfs_info info;
-   // char *tmp=malloc(200);
-    char *tmp=full_path("");
-    DIR *dir = disk.openDir(tmp);
-    if(dir==0){
-        printf("not a directory %s",tmp);
-    }
-    while (disk.readDir(dir, &info)> 0){
-        if (strcmp(info.name, ".") && strcmp(info.name, "..") && strcmp(info.name, "//")){
-            
-            char *tmp=full_path(info.name);
-            if(disk.exist(tmp)){
-                if (info.type == LFS_TYPE_DIR){
-                    printf(" /%s\n",info.name);
-                }else{
-                    printf(" %s %d \n",info.name,info.size);
-                }
-            }
-            strcpy(path, curdir);
+    if (fl_opendir(tmp, &dirstat)) {
+        struct fs_dir_ent dirent;
+        while (fl_readdir(&dirstat, &dirent) == 0) {
+            if (dirent.is_dir)
+                fprintf(stdout,"%s <DIR>\n", dirent.filename);
+            else
+                fprintf(stdout,"%s [%d bytes]\n", dirent.filename, dirent.size);
         }
+        fl_closedir(&dirstat);
+    } else {
+        fprintf(stdout,"Error abriendo directorio\n");
     }
 
-    
-
-    disk.closeDir(dir);
-	return 0;
+    return 0;
 }
-#endif

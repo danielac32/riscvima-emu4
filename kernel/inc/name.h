@@ -8,13 +8,13 @@
 #define	NNAMES		40		/* Number of prefix definitions	*/
 #endif
 
-#define	NM_PRELEN	16		/* Max size of a prefix string	*/
+#define	NM_PRELEN	64		/* Max size of a prefix string	*/
 // RAFA #define	NM_REPLLEN	8		/* Maximum size of a replacement*/
 // RAFA #define	NM_MAXLEN	8		/* Maximum size of a file name	*/
 // #define	NM_REPLLEN	16		/* Maximum size of a replacement*/
-#define	NM_REPLLEN	1		/* Maximum size of a replacement*/
-#define	NM_MAXLEN	16		/* Maximum size of a file name	*/
-#define	NNAMES		5		/* Number of prefix definitions	*/
+#define	NM_REPLLEN	96		/* Maximum size of a replacement*/
+#define	NM_MAXLEN	128		/* Maximum size of a file name	*/
+#define	NNAMES		40		/* Number of prefix definitions	*/
 
 /* Definition of the name prefix table that defines all name mappings */
 

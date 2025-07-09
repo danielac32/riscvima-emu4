@@ -1,66 +1,122 @@
-/* xsh_echo.c - xsh_echo */
-#if 1
+#if 0
 #include <os.h>
 #include <stdio.h>
-#include <timer.h>
+#include "compilermonkey.h"
+#include "object.h"
+#include "vm.h"
 
- 
 
-shellcmd xsh_tt(int nargs, char *args[])
+/*------------------------------------------------------------------------
+ * xhs_echo - write argument strings to stdout
+ *------------------------------------------------------------------------
+ */
+
+char *readfile(char *path){
+    char *tmp=full_path(path);
+    if (tmp==NULL){
+        update_path();
+        return NULL;
+    }
+
+    if(!disk.exist(tmp)){
+       printf("%s file not found!\n",tmp );
+       update_path();
+       return NULL;
+    }
+
+    uint8 *buff;
+  
+    FILE *fs=disk.open(tmp,LFS_O_RDWR);
+    int size = disk.size(fs);
+    printf("size file %d\n",size);
+    buff = malloc(size+100);
+    memset(buff,0,size);
+    disk.read(buff,size,fs);
+    disk.close(fs);
+    buff[size] = '\0';
+    return buff;
+}
+
+
+
+shellcmd xsh_monkey(int nargs, char *args[])
 {
-	#if 0
-    int32	i;			/* walks through args array	*/
-    char *input=readfile(args[1]);
-    if(input==NULL)return 0;
-    struct vm *machine = vm_new((struct bytecode *)input);
-    //struct vm *machine = vm_new(code);
+    int32   i;          /* walks through args array */
 
-    hexDump2(0,input,300);
-    int err = vm_run(machine);
+
+    uint32_t f=heap_free();
+    kprintf("free memory: %d\n",f);
+
+    char *input=readfile(args[1]);
+    
+    f=heap_free();
+    kprintf("free memory readfile: %d\n",f);
+
+
+    if(input==NULL)return 0;
+    
+    struct lexer lexer = new_lexer(input);
+    f=heap_free();
+    kprintf("free memory new_lexer: %d\n",f);
+
+    struct parser parser = new_parser(&lexer);
+    f=heap_free();
+    kprintf("free memory new_parser: %d\n",f);
+
+    struct program *program = parse_program(&parser);
+    f=heap_free();
+    kprintf("free memory parse_program: %d\n",f);
+
+
+    if (parser.errors > 0) {
+        for (int8_t i = 0; i < parser.errors; i++) {
+            printf("%s\n",parser.error_messages[i]);
+        }
+
+        goto exit;//return 0;
+    }
+
+    struct compiler *compiler = compiler_new();
+
+    f=heap_free();
+    kprintf("free memory compiler_new: %d\n",f);
+
+
+    int err = compile_program(compiler, program);
+    f=heap_free();
+    kprintf("free memory compile_program: %d\n",f);
+
+
+    if (err) {
+        printf("%s\n",compiler_error_str(err));
+        goto exit;//return 0;
+    }
+
+    struct bytecode *code = get_bytecode(compiler);
+    struct vm *machine = vm_new(code);
+
+    f=heap_free();
+    kprintf("free memory vm_new: %d\n",f);
+
+
+    err = vm_run(machine);
+    f=heap_free();
+    kprintf("free memory vm_run: %d\n",f);
+
     if (err) {
         printf("Error executing bytecode: %d\n", err);
-        goto exit_monkey;
+        goto exit;//return 0;
     }
-    
-    exit_monkey:
- 
- 
+     
+    exit:
+    free_program(program);
+    compiler_free(compiler);
+    free(code);
+    vm_free(machine);
     free(input);
-    update_path();
-    #endif
-
-
-
-    long n = 100000000; // Número de iteraciones
-    long sum = 0;
-
-    // Iniciar la medición del tiempo
-    t_time start = timer_get_mtime();//timer_now();
-
-    // Algoritmo a medir (suma de los primeros n números)
-    for (long i = 1; i <= n; i++) {
-        sum += i;
-    }
-
-    // Finalizar la medición del tiempo
-    t_time end = timer_get_mtime();//timer_now();
-
-    // Calcular el tiempo transcurrido
-    t_time time_spent =(end - start);// / CONFIG_CPU_HZ;
-
-    // Mostrar resultados
-    printf("La suma de los primeros %d números es: %d\n", n, sum);
-    printf("Tiempo transcurrido: %d segundos\n", time_spent);
-
-
-   return 0;
-    while(1){
-        kprintf("test\n");
-        sleepms(1000);
-    }
-
+    f=heap_free();
+    kprintf("free memory: %d\n",f);
  
- 
-	return 0;
+    return 0;
 }
-#endif
+ #endif

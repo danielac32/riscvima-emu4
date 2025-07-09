@@ -20,18 +20,18 @@ shellcmd xsh_test(int nargs, char *args[]){
 
   AES256_encrypt(block);  
   for(int i=0;i<4;++i){
-    printf(" %2x %2x %2x %2x\n", block[i+0], block[i+4], block[i+8], block[i+12]);
+    fprintf(stdout," %2x %2x %2x %2x\n", block[i+0], block[i+4], block[i+8], block[i+12]);
   }
-  printf("\n");
+  fprintf(stdout,"\n");
 
   AES256_decrypt(block);  
   for(int i=0;i<16;++i){
     if(block[i]!=block2[i]){
-      printf("ERROR.\n");
+      fprintf(stdout,"ERROR.\n");
       return 1;
     }
   }
-  printf("OK.\n");
+  fprintf(stdout,"OK.\n");
   return 0;
   
      

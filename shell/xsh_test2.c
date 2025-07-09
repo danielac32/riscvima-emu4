@@ -15,29 +15,29 @@ uint32 factorial_recursivo(int n) {
 
 int ex1(int nargs, char *args[])
 {
-   //printf("example1\n");
+   //fprintf(stdout,"example1\n");
 
-  printf("%s: %d\n",args[0],atoi(args[1]));
+  fprintf(stdout,"%s: %d\n",args[0],atoi(args[1]));
   /* for (int i = 0; i < 10; ++i)
    {
-      printf("%d\n",i);
+      fprintf(stdout,"%d\n",i);
    }*/
-   printf("factorial: %u\n",factorial_recursivo(atoi(args[1])) & 0xffffffff);
-   printf("___________________________________________\n");
+   fprintf(stdout,"factorial: %u\n",factorial_recursivo(atoi(args[1])) & 0xffffffff);
+   fprintf(stdout,"___________________________________________\n");
    return OK;
 }
 
 int ex0(int nargs, char *args[])
 {
    
-   //printf("%d\n",nargs );
+   //fprintf(stdout,"%d\n",nargs );
   // for (int i = 0; i < nargs; ++i)
    //{
-     //printf("->%s\n",args[i] );
+     //fprintf(stdout,"->%s\n",args[i] );
    //}
 
 
-   //printf("creado tarea: %d\n",atoi(args[0]));
+   //fprintf(stdout,"creado tarea: %d\n",atoi(args[0]));
    resume(create(ex1, 4096*2, 1, "ex_1",2,"creado tarea",args[0]));
   // receive();
    return OK;
@@ -45,10 +45,10 @@ int ex0(int nargs, char *args[])
 
 
 /*int test(int nargs, char *args[]){
-printf("aqui: %d\n",nargs);
+fprintf(stdout,"aqui: %d\n",nargs);
 for (int i = 0; i < nargs; ++i)
 {
-  printf("->%s\n", args[i]);
+  fprintf(stdout,"->%s\n", args[i]);
 }
 return 0;
 }

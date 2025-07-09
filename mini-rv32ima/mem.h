@@ -1,7 +1,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#define DRAM_SIZE 390000 // Tamaño de la memoria RAM simulada
+#define DRAM_SIZE  (6 * 1024 * 1024)
 #define BLOCK_SIZE 32
 
 typedef struct {

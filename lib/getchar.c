@@ -1,6 +1,6 @@
 /* getchar.c - getchar */
-#if 0
-#include <xinu.h>
+#if 1
+#include <os.h>
 //#include <stdio.h>
 
 /*------------------------------------------------------------------------

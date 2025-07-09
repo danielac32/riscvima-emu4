@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <kernel.h>
 #include <conf.h>
+#include <stdio.h>
 #include <process.h>
 #include <queue.h>
 #include <resched.h>
@@ -15,7 +16,7 @@
 #include <shell.h>
 #include <prototypes.h>
 #include <delay.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>

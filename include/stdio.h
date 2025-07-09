@@ -12,9 +12,9 @@
 #include <stdbool.h>
 /* Definintion of standard input/ouput/error used with shell commands */
 
-//#define	stdin	((proctab[currpid]).prdesc[0])
-//#define	stdout	((proctab[currpid]).prdesc[1])
-//#define	stderr	((proctab[currpid]).prdesc[2])
+#define	stdin	((proctab[currpid]).prdesc[0])
+#define	stdout	((proctab[currpid]).prdesc[1])
+#define	stderr	((proctab[currpid]).prdesc[2])
 
 
 /* Prototypes for formatted output functions */

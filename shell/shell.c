@@ -55,7 +55,7 @@ const	struct	cmdent	cmdtab[] = {
 	{"ps",		TRUE,	xsh_ps},
 	{"?",		FALSE,	xsh_help},
 	{"blink",   FALSE,  xsh_blink},// SI ES FALSE SE CREA UNA TAREA
-	{"tt",      FALSE,  xsh_tt},
+	//{"tt",      FALSE,  xsh_tt},
 	{"cd",      TRUE,   xsh_cd},
 	{"ls",      TRUE,   xsh_ls},
 	{"cat",     FALSE,  xsh_cat},
@@ -66,10 +66,13 @@ const	struct	cmdent	cmdtab[] = {
 	{"touch",   TRUE,   xsh_touch},
 	{"run",     FALSE,  xsh_run},
     {"format",  FALSE,  xsh_format},
-	{"test",    FALSE,  xsh_test},
-	{"aes",     FALSE,  xsh_aes},
-	{"freq",    FALSE , xsh_freq},
-	{"test2",    FALSE , xsh_test2},
+    {"mv",FALSE,xsh_mv},
+    {"cp",FALSE,xsh_cp},
+    {"monkey",FALSE,xsh_monkey}
+	//{"test",    FALSE,  xsh_test},
+	//{"aes",     FALSE,  xsh_aes},
+	//{"freq",    FALSE , xsh_freq},
+	//{"test2",    FALSE , xsh_test2},
 
 };
 
@@ -92,21 +95,8 @@ uint32	ncmd = sizeof(cmdtab) / sizeof(struct cmdent);
 /*									*/
 /************************************************************************/
 
-int readBytes(char *buffer,int length){
-  int count = 0;
-  while (count < length) {
-    int c = readbyte();
-    if (c < 0) break;
-    *buffer++ = (char)c;
-    count++;
-   // sleep(0);
-   // yield();
-  }
-  return count;
-}
- 
 
-process	__attribute__((optimize("Os"))) shell (
+process	 shell (
 		int nargs, char *arg[]///did32	dev		/* ID of tty device from which	*/
 	)				/*   to accept commands		*/
 {
@@ -148,9 +138,16 @@ process	__attribute__((optimize("Os"))) shell (
    strcpy(path, "/");
     strcpy(curdir, path);
     
-did32	dev=CONSOLE;
+    did32	dev = atoi(arg[0]);
 	/* Print shell banner and startup message */
-    
+
+
+   /*for (int i = 0; i < nargs; ++i)
+    {
+    	printf("> %s\n", arg[i]);
+    }
+    int output = atoi(arg[0]);
+    fprintf(dev,"dev : %d\n",output);*/
 
  
 
@@ -175,14 +172,14 @@ did32	dev=CONSOLE;
 
          
        
-		//len = read(dev, buf, sizeof(buf));
-        while(!kbhit()){
+		len = read(dev, buf, sizeof(buf));
+        /*while(!kbhit()){
                yield();
         	//sleep(0);
         }
         while(kbhit()){
              len = readBytes(buf,sizeof(buf));
-        }
+        }*/
 
 		/* Exit gracefully on end-of-file */
 

@@ -33,7 +33,7 @@ shellcmd xsh_freq(int nargs, char *args[])
     // Calcular la frecuencia (esto dependerá del tiempo transcurrido)
     // Suponiendo que el tiempo transcurrido es 1 segundo
     uint32_t frequency = cycles_used; // en ciclos por segundo
-    printf("%d mhz\n", frequency/1000000);
+    fprintf(stdout,"%d mhz\n", frequency/1000000);
 
 	return 0;
 }

@@ -1,6 +1,6 @@
 /* fputc.c - fputc */
-#if 0
-#include <xinu.h>
+#if 1
+#include <os.h>
 extern int putc(int, char);
 
 #ifndef	SYSERR

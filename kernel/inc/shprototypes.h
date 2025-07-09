@@ -1,5 +1,8 @@
 //extern shellcmd xsh_rdstest(int nargs, char *args[]);
 
+extern shellcmd xsh_monkey(int nargs, char *args[]);
+extern shellcmd xsh_cp(int nargs, char *args[]);
+extern shellcmd xsh_mv(int nargs, char *args[]);
 extern shellcmd xsh_format(int nargs, char *args[]);
 extern shellcmd xsh_elf(int nargs, char *args[]);
 extern shellcmd xsh_vm(int nargs, char *args[]);

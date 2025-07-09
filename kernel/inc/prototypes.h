@@ -275,3 +275,13 @@ extern	devcall	ttywrite( struct dentry *, char *, int32);
 
 
 
+
+extern devcall telnetinit(struct dentry *);
+extern devcall telnetopen(struct dentry *, char *, char *);
+extern devcall telnetclose(struct dentry *);
+extern devcall telnetread(struct dentry *, void *, uint32);
+extern devcall telnetwrite(struct dentry *, void *, uint32);
+extern devcall telnetgetc(struct dentry *);
+extern devcall telnetputc(struct dentry *, char);
+extern devcall telnetcontrol(struct dentry *, int32, int32, int32);
+

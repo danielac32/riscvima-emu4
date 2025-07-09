@@ -5,7 +5,7 @@
 
 shellcmd xsh_pwd(int nargs, char *args[])
 {
-	//char *s=full_path("");
-    //printf("%s\n",s );
+	char *s=full_path("");
+    fprintf(stdout,"%s\n",s );
 	return 0;
 }

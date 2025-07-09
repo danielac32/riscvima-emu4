@@ -6,17 +6,30 @@
 #include <string.h>
 #include <stdbool.h>
 #include <mem.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 //#include "default64mbdtc.h"
 
- 
-static uint8_t * ram_image;
+// Just default RAM amount is 64MB.
 int fail_on_all_faults = 0;
 
 Memory mem;
 
+FILE *disk_file = NULL;
+typedef struct{
+	unsigned char *mem;
+	unsigned int size;
+}Disk;
 
-static int64_t SimpleReadNumberInt( const char * number, int64_t defaultNumber );
+Disk VirtualDisk;
+
+
+
+
+
 static uint64_t GetTimeMicroseconds();
 static void ResetKeyboardInput();
 static void CaptureKeyboardInput();
@@ -33,7 +46,6 @@ static int ReadKBByte();
 // This is the functionality we want to override in the emulator.
 //  think of this as the way the emulator's processor is connected to the outside world.
 #define MINIRV32WARN( x... ) printf( x );
-#define MINIRV32_DECORATE  static
 #define MINI_RV32_RAM_SIZE DRAM_SIZE
 #define MINIRV32_IMPLEMENTATION
 #define MINIRV32_POSTEXEC( pc, ir, retval ) { if( retval > 0 ) { if( fail_on_all_faults ) { printf( "FAULT\n" ); return 3; } else retval = HandleException( ir, retval ); } }
@@ -56,54 +68,41 @@ static inline bool check_memory_bounds(uint32_t ofs, uint32_t size)
 
 static void MINIRV32_STORE4(uint32_t ofs, uint32_t val) {
 	if (check_memory_bounds(ofs, 4)) {
-   // write_memory_4("dram", ofs, val);
-	//psram_write(ofs,&val,4);
 	*((uint32_t *)(mem.p + ofs)) = val;//cache_write(ofs,&val,4);
 }
 
 }
 
 static void MINIRV32_STORE2(uint32_t ofs, uint16_t val) {
-    //write_memory_2("dram", ofs, val);
-    //psram_write(ofs,&val,2);
     if (check_memory_bounds(ofs, 2)) {
     *((uint16_t *)(mem.p + ofs)) = val;//cache_write(ofs,&val,2);
 }
 }
 
 static void MINIRV32_STORE1(uint32_t ofs, uint8_t val) {
-    //write_memory_1("dram", ofs, val);
-    //psram_write(ofs,&val,1);
     if (check_memory_bounds(ofs, 1)) {
-    *((uint8_t *)(mem.p + ofs)) = val;//cache_write(ofs,&val,1);
-}
+	    *((uint8_t *)(mem.p + ofs)) = val;//cache_write(ofs,&val,1);
+	}
 }
 
 static uint32_t MINIRV32_LOAD4(uint32_t ofs) {
     uint32_t val = 0;
-    //return read_memory_4("dram", ofs);
-    //psram_read(ofs,&val,4);
     if (check_memory_bounds(ofs, 4)) {
-    val = *((uint32_t *)(mem.p + ofs));//cache_read(ofs,&val,4);
-
-}
+	    val = *((uint32_t *)(mem.p + ofs));//cache_read(ofs,&val,4);
+	}
     return val;
 }
 
 static uint16_t MINIRV32_LOAD2(uint32_t ofs) {
     uint16_t val = 0;
-    //return read_memory_2("dram", ofs);
-    //psram_read(ofs,&val,2);
     if (check_memory_bounds(ofs, 2)) {
-    val = *((uint16_t *)(mem.p + ofs));//cache_read(ofs,&val,2);
-}
+	    val = *((uint16_t *)(mem.p + ofs));//cache_read(ofs,&val,2);
+	}
     return val;
 }
 
 static uint8_t MINIRV32_LOAD1(uint32_t ofs) {
 	uint8_t val = 0;
-      //return read_memory_1("dram", ofs);//(uint8_t)ram_image[ofs];
-    //psram_read(ofs,&val,1);
     if (check_memory_bounds(ofs, 1)) {
     val = *((uint8_t *)(mem.p + ofs));//cache_read(ofs,&val,1);
 }
@@ -111,65 +110,46 @@ static uint8_t MINIRV32_LOAD1(uint32_t ofs) {
 }
 #include "mini-rv32ima.h"
 
-//uint8_t * ram_image = 0;
 struct MiniRV32IMAState core;
-const char * kernel_command_line = 0;
+ 
 
-static void DumpState( struct MiniRV32IMAState * core, uint8_t * ram_image );
+static void DumpState( struct MiniRV32IMAState * core/*, uint8_t * ram_image */);
 
 int main( int argc, char ** argv )
 {
+    /*disk_file = fopen("disk.img", "r+b");
+    if (!disk_file) {
+        printf("No se encontró 'disk.img', creando uno nuevo...\n");
+        disk_file = fopen("disk.img", "w+b");
+        if (!disk_file) {
+            perror("No se pudo crear disk.img");
+            return 1;
+        }
+        // Crear un archivo de 64MB lleno de ceros
+        const size_t DISK_SIZE = 64 * 1024 * 1024; // 64MB
+        fseek(disk_file, DISK_SIZE - 1, SEEK_SET);
+        fputc('\0', disk_file); // Escribir un byte para extender el archivo
+        rewind(disk_file);
+    } else {
+        printf("Cargado 'disk.img' existente.\n");
+    }
+    fclose(disk_file);*/
+
+    const size_t DISK_SIZE = 64 * 1024 * 1024; // 64MB
+    VirtualDisk.mem=malloc(DISK_SIZE);
+    VirtualDisk.size=DISK_SIZE;
+    memset(VirtualDisk.mem,0,DISK_SIZE);
 
 restart:
 	{
-		/*FILE * f = fopen( argv[1], "rb" );
-		if( !f || ferror( f ) )
-		{
-			fprintf( stderr, "Error: \"%s\" not found\n", argv[1] );
-			return -5;
-		}
-		fseek( f, 0, SEEK_END );
-		long flen = ftell( f );
-		fseek( f, 0, SEEK_SET );
-		if( flen > DRAM_SIZE )
-		{
-			fprintf( stderr, "Error: Could not fit RAM image (%ld bytes) into %d\n", flen, DRAM_SIZE );
-			return -6;
-		}
-
-		memset( mem.data, 0, DRAM_SIZE );
-		if( fread( mem.data, flen, 1, f ) != 1)
-		{
-			fprintf( stderr, "Error: Could not load image.\n" );
-			return -7;
-		}
-		fclose( f );*/
         mem = create_memory(argv[1]);
-
 	}
-
-	//CaptureKeyboardInput();
-
-	// The core lives at the end of RAM.
-	/*core = (struct MiniRV32IMAState *)(ram_image + DRAM_SIZE - sizeof( struct MiniRV32IMAState ));
-	core->pc = MINIRV32_RAM_IMAGE_OFFSET;
-	core->regs[10] = 0x00; //hart ID
-	core->regs[11] = 0; //dtb_pa (Must be valid pointer) (Should be pointer to dtb)
-	core->extraflags |= 3; // Machine-mode.*/
-
 	core.regs[10] = 0x00; // hart ID
 	core.regs[11] = 0;
 	core.extraflags |= 3; // Machine-mode.
 
 	core.pc = MINIRV32_RAM_IMAGE_OFFSET;
-	// Image is loaded.
-	
-	//int y;
-	//char buff[100];
-
-#if 1
-
-
+ 
 	uint64_t lastTime = GetTimeMicroseconds();
 	int instrs_per_flip = 1024;
 	printf("RV32IMA starting\n");
@@ -177,9 +157,6 @@ restart:
 
 
 	while(1){
-
- 
-
 	  	int ret;
 		uint64_t *this_ccount = ((uint64_t*)&core.cyclel);
 		uint32_t elapsedUs = GetTimeMicroseconds() / lastTime;
@@ -197,39 +174,7 @@ restart:
 			case 0x5555: printf( "POWEROFF@0x%08x%08x\n", core.cycleh, core.cyclel ); return 0; //syscon code for power-off
 			default: printf( "Unknown failure %d\n",ret ); break;
 		}
-	  	  
 	}
-    #else
-    uint64_t rt;
-	uint64_t lastTime = (fixed_update)?0:(GetTimeMicroseconds()/time_divisor);
-	int instrs_per_flip = 1024;
-	for( rt = 0; rt < instct+1 || instct < 0; rt += instrs_per_flip )
-	{
-		uint64_t * this_ccount = ((uint64_t*)&core.cyclel);
-		uint32_t elapsedUs = 0;
-		if( fixed_update )
-			elapsedUs = *this_ccount / time_divisor - lastTime;
-		else
-			elapsedUs = GetTimeMicroseconds()/time_divisor - lastTime;
-		lastTime += elapsedUs;
-
-		 
-		int ret = MiniRV32IMAStep( &core, ram_image, 0, elapsedUs, instrs_per_flip ); // Execute upto 1024 cycles before breaking out.
-		switch( ret )
-		{
-			case 0: break;
-			case 1: //if( do_sleep ) MiniSleep(); *this_ccount += instrs_per_flip; 
-				break;
-			case 3: instct = 0; break;
-			case 0x7777: goto restart;	//syscon code for restart
-			case 0x5555: printf( "POWEROFF@0x%08x%08x\n", core.cycleh, core.cyclel ); return 0; //syscon code for power-off
-			default: printf( "Unknown failure\n" ); break;
-		}
-	}
-	#endif
-	
-
-	DumpState( &core, ram_image);
 }
 
 
@@ -244,39 +189,8 @@ restart:
 #include <unistd.h>
 #include <signal.h>
 #include <sys/time.h>
-
-static void CtrlC()
-{
-	DumpState( &core, ram_image);
-	exit( 0 );
-}
-
-// Override keyboard, so we can capture all keyboard input for the VM.
-static void CaptureKeyboardInput()
-{
-	// Hook exit, because we want to re-enable keyboard.
-	atexit(ResetKeyboardInput);
-	signal(SIGINT, CtrlC);
-
-	struct termios term;
-	tcgetattr(0, &term);
-	term.c_lflag &= ~(ICANON | ECHO); // Disable echo as well
-	tcsetattr(0, TCSANOW, &term);
-}
-
-static void ResetKeyboardInput()
-{
-	// Re-enable echo, etc. on keyboard.
-	struct termios term;
-	tcgetattr(0, &term);
-	term.c_lflag |= ICANON | ECHO;
-	tcsetattr(0, TCSANOW, &term);
-}
-
-static void MiniSleep()
-{
-	usleep(500);
-}
+ 
+ 
 
 static uint64_t GetTimeMicroseconds()
 {
@@ -362,185 +276,16 @@ static void HandleOtherCSRWrite( uint8_t * image, uint16_t csrno, uint32_t value
 	{
 		printf( "%08x", value ); fflush( stdout );
 	}
-	else if( csrno == 0x138 )
-	{
-		//Print "string"
-		uint32_t ptrstart = value - MINIRV32_RAM_IMAGE_OFFSET;
-		uint32_t ptrend = ptrstart;
-		if( ptrstart >= DRAM_SIZE )
-			printf( "DEBUG PASSED INVALID PTR (%08x)\n", value );
-		while( ptrend < DRAM_SIZE )
-		{
-			if( image[ptrend] == 0 ) break;
-			ptrend++;
-		}
-		if( ptrend != ptrstart )
-			fwrite( image + ptrstart, ptrend - ptrstart, 1, stdout );
-	}
 	else if( csrno == 0x139 )
 	{
 		putchar( value ); fflush( stdout );
-	}else if (csrno == 0x400){//download
-		uint32_t start = value - MINIRV32_RAM_IMAGE_OFFSET;
-		printf("%x\n",start );
-	    FILE *fptr;
-	    fptr = fopen("fs2.img","w");
-
-	    if(fptr == NULL)
-	    {
-	      printf("Error!");   
-	      exit(1);             
-	    }
-	    fwrite((image + start), 500000, 1, fptr); 
-	    fclose(fptr);
-	}else if (csrno == 0x401){//upload
-		uint32_t start = value - MINIRV32_RAM_IMAGE_OFFSET;
-		printf("%x\n",start );
-		FILE *fptr;
-	    fptr = fopen("fs2.img","r");
-
-	    if(fptr == NULL)
-	    {
-	      printf("Error!");   
-	      exit(1);             
-	    }
-	    fread((image + start), 500000, 1, fptr); 
-	    fclose(fptr);
 	}
-}
-
-
-enum {
-    SYS_FOPEN = 0x0001,
-    SYS_FCLOSE = 0x0002,
-    SYS_FFLUSH = 0x0003,
-    SYS_FGETC = 0x0004,
-    SYS_FGETS = 0x0005,
-    SYS_FPUTC = 0x0006,
-    SYS_FPUTS = 0x0007,
-    SYS_FWRITE = 0x0008,
-    SYS_FREAD = 0x0009,
-    SYS_FSEEK = 0x0010,
-    SYS_FGETPOS = 0x0011,
-    SYS_FTELL = 0x0012,
-    SYS_FEOF = 0x0013,
-    SYS_REMOVE = 0x0014,
-    SYS_MKDIR = 0x0015
-};
-
-
-
-
-// Función para obtener el puntero a una cadena desde la memoria
-char* getString(uint32_t t) {
-    uint32_t pc_offset = t - MINIRV32_RAM_IMAGE_OFFSET;  // Calculamos la dirección real en la memoria
-
-    uint32_t i = 0;
-    //static char str[256];  // Almacenamos la cadena en un arreglo estático (puedes ajustar el tamaño según sea necesario)
-    char *str=malloc(101);
-    // Leer byte por byte hasta encontrar el carácter nulo '\0' o alcanzar el tamaño máximo
-    while (1) {
-        char c = MINIRV32_LOAD1(pc_offset + i);  // Leer el byte de la memoria
-        if (c == '\0' || i >= 100) {  // Fin de la cadena o límite de tamaño
-            str[i] = '\0';  // Aseguramos que la cadena esté correctamente terminada
-            break;
-        }
-        str[i] = c;  // Copiar el carácter al arreglo
-        i++;
-    }
-
-    return str;  // Retornar el puntero a la cadena almacenada en 'str'
-}
-
-
-static uint32_t HandleOtherReturnSyscall(uint16_t csrno,uint32_t a0,uint32_t a1,uint32_t a2,uint32_t a3,uint32_t a4,uint32_t a5) {
-    uint32_t x = 0;
-
-    // Usamos un switch para manejar las syscalls
-    switch (csrno) {
-        case SYS_FOPEN:
-            // Lógica específica para la syscall SYS_FOPEN (0x0001)
-            //x = 123; // Este es un valor de ejemplo, cámbialo según lo que necesites
-            //printf("%x %x\n", a0,a1);
-            //printf("%s %s\n",getString(a0) ,getString(a1));
-
-            char *filename=getString(a0);
-            char *mode=getString(a1);
-            printf("%s %s\n",filename , mode);
-            free(filename);
-            free(mode);
-            x=0;
-            break;
-        case SYS_FCLOSE:
-            // Lógica específica para la syscall SYS_FCLOSE (0x0002)
-            x = 555; // Otro valor de ejemplo
-            break;
-        case SYS_FFLUSH:
-            // Lógica para SYS_FFLUSH (0x0003)
-            x = 789;
-            break;
-        case SYS_FGETC:
-            // Lógica para SYS_FGETC (0x0004)
-            x = 456;
-            break;
-        case SYS_FGETS:
-            // Lógica para SYS_FGETS (0x0005)
-            x = 321;
-            break;
-        case SYS_FPUTC:
-            // Lógica para SYS_FPUTC (0x0006)
-            x = 654;
-            break;
-        case SYS_FPUTS:
-            // Lógica para SYS_FPUTS (0x0007)
-            x = 987;
-            break;
-        case SYS_FWRITE:
-            // Lógica para SYS_FWRITE (0x0008)
-            x = 1001;
-            break;
-        case SYS_FREAD:
-            // Lógica para SYS_FREAD (0x0009)
-            x = 2002;
-            break;
-        case SYS_FSEEK:
-            // Lógica para SYS_FSEEK (0x0010)
-            x = 3030;
-            break;
-        case SYS_FGETPOS:
-            // Lógica para SYS_FGETPOS (0x0011)
-            x = 4040;
-            break;
-        case SYS_FTELL:
-            // Lógica para SYS_FTELL (0x0012)
-            x = 5050;
-            break;
-        case SYS_FEOF:
-            // Lógica para SYS_FEOF (0x0013)
-            x = 6060;
-            break;
-        case SYS_REMOVE:
-            // Lógica para SYS_REMOVE (0x0014)
-            x = 7070;
-            break;
-        case SYS_MKDIR:
-            // Lógica para SYS_MKDIR (0x0015)
-            x = 8080;
-            break;
-        default:
-            // Si la syscall no se encuentra en el enum, manejamos un caso por defecto
-            x = 0; // Valor predeterminado si no se encuentra la syscall
-            break;
-    }
-
-    return x;
 }
 
 
 
 static int32_t HandleOtherCSRRead( uint8_t * image, uint16_t csrno )
 {
-
 	char c;
     if( csrno == 0x141 )
 	{  
@@ -549,53 +294,196 @@ static int32_t HandleOtherCSRRead( uint8_t * image, uint16_t csrno )
 	}else
 	if( csrno == 0x140 )
 	{  
-        c=IsKBHit();
-        if(!c){
-        	return -1;
-        }
-        c = ReadKBByte();
-        
-        //printf("csr %c\n",c );
-        return c;
-		//if( !IsKBHit() ) return -1;
-		//return ReadKBByte();
-	}else if(csrno == 0x333){
-		//struct data *s=(struct data*)a;
-		//printf("%s\n",s->a);
-		//printf("%s\n",(uint32_t  *)a );
-		//char *p=(char *)a;
-		//printf("aquiiii %s\n",*(char *)a );
-		return 0;
+		if( !IsKBHit() ) return -1;
+		return ReadKBByte();
 	}
 	return 0;
 }
 
-static int64_t SimpleReadNumberInt( const char * number, int64_t defaultNumber )
-{
-	if( !number || !number[0] ) return defaultNumber;
-	int radix = 10;
-	if( number[0] == '0' )
-	{
-		char nc = number[1];
-		number+=2;
-		if( nc == 0 ) return 0;
-		else if( nc == 'x' ) radix = 16;
-		else if( nc == 'b' ) radix = 2;
-		else { number--; radix = 8; }
-	}
-	char * endptr;
-	uint64_t ret = strtoll( number, &endptr, radix );
-	if( endptr == number )
-	{
-		return defaultNumber;
-	}
-	else
-	{
-		return ret;
-	}
+
+enum {
+    DISK_INIT = 0x0001,
+    DISK_WRITE = 0x0002,
+    DISK_READ = 0x0003,
+    TELNET_START = 0x0009,
+    TELNET_ACCEPT = 0x0010,
+    TELNET_SEND = 0x0011,
+    TELNET_RECV = 0x0012,
+    TELNET_CLOSE = 0x0013,
+
+};
+#define MAX_CLIENTS 5
+
+int telnet_sock = -1;
+int client_socks[MAX_CLIENTS] = {0};
+
+
+
+
+static uint32_t HandleOtherReturnSyscall(uint16_t csrno, uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5) {
+    switch (csrno) {
+
+
+        case TELNET_START: {
+            if (telnet_sock != -1) return 1;
+            
+            telnet_sock = socket(AF_INET, SOCK_STREAM, 0);
+            if (telnet_sock < 0) {
+                perror("socket() failed");
+                return -1;
+            }
+            
+            struct sockaddr_in addr;
+            memset(&addr, 0, sizeof(addr));
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(23);
+            addr.sin_addr.s_addr = INADDR_ANY;
+            
+            int opt = 1;
+            setsockopt(telnet_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+            
+            if (bind(telnet_sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+                perror("bind() failed");
+                close(telnet_sock);
+                telnet_sock = -1;
+                return -1;
+            }
+            
+            if (listen(telnet_sock, MAX_CLIENTS) < 0) {
+                perror("listen() failed");
+                close(telnet_sock);
+                telnet_sock = -1;
+                return -1;
+            }
+            
+            fcntl(telnet_sock, F_SETFL, O_NONBLOCK);
+          //  printf("TELNET server started on port 23\n");
+            return 1;
+        }
+            
+        case TELNET_ACCEPT: {
+            if (telnet_sock == -1) return -1;
+            
+            struct sockaddr_in client_addr;
+            socklen_t len = sizeof(client_addr);
+            int fd = accept(telnet_sock, (struct sockaddr*)&client_addr, &len);
+            
+            if (fd >= 0) {
+                fcntl(fd, F_SETFL, O_NONBLOCK);
+                
+                for (int i = 0; i < MAX_CLIENTS; i++) {
+                    if (client_socks[i] == 0) {
+                        client_socks[i] = fd;
+                        
+                        const char *banner = "\r\nBienvenido al servidor Xinu (PC)\r\n$ ";
+                        send(fd, banner, strlen(banner), 0);
+                        
+                        //printf("New TELNET client (ID=%d)\n", i);
+                        return i;
+                    }
+                }
+                close(fd);
+            }
+            return -1;
+        }
+            
+        case TELNET_SEND: {
+            int id = a0;
+            if (id < 0 || id >= MAX_CLIENTS || client_socks[id] == 0) return -1;
+            
+            // a1 es el puntero al buffer en memoria del emulado
+            const char* buf = (const char*)(mem.p + (a1 - MINIRV32_RAM_IMAGE_OFFSET));
+            size_t len = a2;
+            
+            return send(client_socks[id], buf, len, 0);
+        }
+        
+        case TELNET_RECV: {
+            int id = a0;
+            if (id < 0 || id >= MAX_CLIENTS || client_socks[id] == 0) return -1;
+            
+            // a1 es el puntero al buffer de destino
+            char* buf = (char*)(mem.p + (a1 - MINIRV32_RAM_IMAGE_OFFSET));
+            size_t max_len = a2;
+            
+            memset(buf, 0, max_len);
+            int received = recv(client_socks[id], buf, max_len, MSG_DONTWAIT);
+            
+            if (received == 0) {
+                printf("Client %d disconnected\n", id);
+                close(client_socks[id]);
+                client_socks[id] = 0;
+                return -2;
+            }
+            
+            return received;
+        }
+        
+        case TELNET_CLOSE: {
+            int id = a0;
+            if (id < 0 || id >= MAX_CLIENTS || client_socks[id] == 0) return -1;
+            
+           // printf("Closing client %d\n", id);
+            close(client_socks[id]);
+            client_socks[id] = 0;
+            return 0;
+        }
+
+
+
+         case DISK_INIT:
+         	{
+         	/*disk_file = fopen("disk.img", "rb");
+            fseek(disk_file, 0, SEEK_END);
+            long size = ftell(disk_file);
+            //rewind(disk_file);
+            fclose(disk_file);
+            return (uint32_t)size; */
+         		return VirtualDisk.size;
+         	}
+         case DISK_READ: {
+    // a0 = buffer (destino en RAM emulada)
+    // a1 = start_block (sector LBA)
+    // a2 = sector_count (siempre 512 en tu caso)
+    
+    uint32_t ram_addr = a0 - MINIRV32_RAM_IMAGE_OFFSET;
+    uint32_t disk_offset = a1 * 512; // Convertir LBA a offset de bytes
+    
+    // Verificación de límites
+    if (disk_offset + 512 > VirtualDisk.size) {
+        return 0; // Error: fuera de límites
+    }
+    
+    // Copia directa sector a RAM emulada
+    for (int i = 0; i < 512; i++) {
+        MINIRV32_STORE1(ram_addr + i, VirtualDisk.mem[disk_offset + i]);
+    }
+    
+    return 1; // Éxito
 }
 
-static void DumpState( struct MiniRV32IMAState * core, uint8_t * ram_image )
+case DISK_WRITE: {
+    // a0 = buffer (origen en RAM emulada)
+    // a1 = start_block (sector LBA)
+    // a2 = sector_count (siempre 512)
+    
+    uint32_t ram_addr = a0 - MINIRV32_RAM_IMAGE_OFFSET;
+    uint32_t disk_offset = a1 * 512;
+    
+    if (disk_offset + 512 > VirtualDisk.size) {
+        return 0; // Error: fuera de límites
+    }
+    
+    // Copia directa RAM emulada a sector
+    for (int i = 0; i < 512; i++) {
+        VirtualDisk.mem[disk_offset + i] = MINIRV32_LOAD1(ram_addr + i);
+    }
+    
+    return 1; // Éxito
+}
+    }
+}
+static void DumpState( struct MiniRV32IMAState * core/*, uint8_t * ram_image */)
 {
 	uint32_t pc = core->pc;
 	uint32_t pc_offset = pc - MINIRV32_RAM_IMAGE_OFFSET;
@@ -604,8 +492,8 @@ static void DumpState( struct MiniRV32IMAState * core, uint8_t * ram_image )
 	printf( "PC: %08x ", pc );
 	if( pc_offset >= 0 && pc_offset < DRAM_SIZE - 3 )
 	{
-		ir = *((uint32_t*)(&((uint8_t*)ram_image)[pc_offset]));
-		printf( "[0x%08x] ", ir ); 
+		//ir = *((uint32_t*)(&((uint8_t*)ram_image)[pc_offset]));
+		//printf( "[0x%08x] ", ir ); 
 	}
 	else
 		printf( "[xxxxxxxxxx] " ); 

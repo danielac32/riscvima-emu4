@@ -1,7 +1,7 @@
 /* fputs.c - fputs */
 
-#if 0
-#include <xinu.h>
+#if 1
+#include <os.h>
 
 // REALLY NEEDED?
 //extern int putc(int, char);

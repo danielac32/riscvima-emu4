@@ -16,7 +16,7 @@ fixpath = $(strip $1)
 
  
 CFLAGS      ?=  -march=rv32ima -mabi=ilp32 -ffreestanding -nostartfiles  -Os
-INCLUDES     =  -I include -I arch/riscv -I sys -I kernel/inc
+INCLUDES     =  -I include -I arch/riscv -I sys -I kernel/inc -I fat32/Inc -I interpreter/monkey/inc
 LDSCRIPT     =  arch/riscv/linker.ld
 
 OBJDIR        = obj
@@ -28,16 +28,26 @@ SRCLIB        = $(wildcard lib/*.c)
 LIBOBJ        = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCLIB)))))
 FLOATLIB      = $(wildcard floatmath/*.S)
 FLOATOBJ      = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(FLOATLIB)))))
-KERNEL         = $(wildcard kernel/src/*.c) 
-KERNOBJ         = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(KERNEL)))))
+KERNEL        = $(wildcard kernel/src/*.c) 
+KERNOBJ       = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(KERNEL)))))
 
-SRCDEVICE     = $(wildcard device/nam/*.c) $(wildcard device/tty/*.c) #$(wildcard device/fs/*.c) 
+SRCDEVICE     = $(wildcard device/nam/*.c) $(wildcard device/tty/*.c) $(wildcard device/telnet/*.c) 
 DEVICEOBJ     = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCDEVICE)))))
 SRCSHELL      = $(wildcard shell/*.c) 
 SHELLOBJ      = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCSHELL)))))
 
-SRCMONKEY      =  #$(wildcard monkey/src/*.c) 
-MONKEYOBJ      =  #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
+SRCFAT32         = $(wildcard fat32/Src/*.c)  $(wildcard tinyscript/*.c) $(wildcard cc/*.c) #$(wildcard basic/*.c) 
+FAT32OBJ         = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCFAT32)))))
+
+SRCBASIC     =  $(wildcard basic/*.c) 
+OBJBASIC     =  $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCBASIC)))))
+
+
+SRCMONKEY      =  $(wildcard interpreter/monkey/src/*.c) 
+MONKEYOBJ      =  $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
+
+SRCPEPPER      = $(wildcard interpreter/pepper-lang/*.c) 
+PEPPEROBJ      = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))#$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
 
 FSLIB         = #$(wildcard littlefs/*.c)
 FSOBJ         = #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(FSLIB)))))
@@ -49,7 +59,7 @@ FSOBJ         = #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(F
 DOUT         = kernel
 
 
-SRCPATH = $(sort $(dir $(START) $(SOURCES) $(SRCLIB) $(FLOATLIB) $(SRCMONKEY) $(FSLIB) $(KERNEL) $(SRCSHELL) $(SRCDEVICE)))
+SRCPATH = $(sort $(dir $(START) $(SOURCES) $(SRCLIB) $(SRCBASIC) $(FLOATLIB) $(SRCFAT32) $(SRCMONKEY) $(FSLIB) $(KERNEL) $(SRCSHELL) $(SRCDEVICE)))
 vpath %.c $(SRCPATH)
 vpath %.S $(SRCPATH)
 
@@ -69,9 +79,9 @@ $(DOUT).bin : $(DOUT).elf
 
 
 
-$(DOUT).elf : $(OBJDIR) $(STARTOBJ) $(LIBOBJ) $(FLOATOBJ) $(KERNOBJ) $(DEVICEOBJ) $(FSOBJ) $(MONKEYOBJ) $(SHELLOBJ) $(OBJECTS) 
+$(DOUT).elf : $(OBJDIR) $(STARTOBJ) $(LIBOBJ) $(FLOATOBJ) $(OBJBASIC) $(KERNOBJ) $(DEVICEOBJ) $(FAT32OBJ) $(FSOBJ) $(MONKEYOBJ) $(SHELLOBJ) $(OBJECTS) 
 	@echo building $@
-	@$(CC) $(CFLAGS) $(LDFLAGS) -T $(LDSCRIPT) $(STARTOBJ) $(LIBOBJ) $(FLOATOBJ) $(FSOBJ) $(MONKEYOBJ) $(KERNOBJ) $(SHELLOBJ) $(DEVICEOBJ) $(OBJECTS) -o $@
+	@$(CC) $(CFLAGS) $(LDFLAGS) -T $(LDSCRIPT) $(STARTOBJ) $(LIBOBJ) $(FLOATOBJ) $(OBJBASIC) $(FAT32OBJ) $(FSOBJ) $(MONKEYOBJ) $(KERNOBJ) $(SHELLOBJ) $(DEVICEOBJ) $(OBJECTS) -o $@
 
 	
 clean: $(OBJDIR)

@@ -5,12 +5,41 @@
  *  ttyread  -  Read character(s) from a tty device (interrupts disabled)
  *------------------------------------------------------------------------
  */
+
+int readBytes(char *buffer,int length){
+  int count = 0;
+  while (count < length) {
+    int c = readbyte();
+    if (c < 0) break;
+    *buffer++ = (char)c;
+    count++;
+   // sleep(0);
+   // yield();
+  }
+  return count;
+}
+ 
+
+
 devcall	ttyread(
 	  struct dentry	*devptr,	/* Entry in device switch table	*/
 	  char	*buff,			/* Buffer of characters		*/
 	  int32	count 			/* Count of character to read	*/
 	)
 {
+
+int32	nread;
+
+
+while(!kbhit()){
+      yield();
+}
+while(kbhit()){
+     nread = readBytes(buff,count);
+}
+
+
+#if 0	
 struct	ttycblk	*typtr;		/* Pointer to tty control block	*/
 	int32	avail;			/* Characters available in buff.*/
 	int32	nread;			/* Number of characters read	*/
@@ -63,5 +92,6 @@ struct	ttycblk	*typtr;		/* Pointer to tty control block	*/
 		*buff++ = ch;
 		nread++;
 	}
+	#endif
 	return nread;
 }

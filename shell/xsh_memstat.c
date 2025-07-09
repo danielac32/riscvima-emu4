@@ -16,25 +16,25 @@ shellcmd xsh_memstat(int nargs, char *args[])
 
 
 	uint32_t f=heap_free();
-    kprintf("free memory: %d\n",f);
+    fprintf(stdout,"free memory: %d\n",f);
 	 #if 1
 	/* For argument '--help', emit help about the 'memstat' command	*/
 
 	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
-		printf("use: %s \n\n", args[0]);
-		printf("Description:\n");
-		printf("\tDisplays the current memory use and prints the\n");
-		printf("\tfree list.\n");
-		printf("Options:\n");
-		printf("\t--help\t\tdisplay this help and exit\n");
+		fprintf(stdout,"use: %s \n\n", args[0]);
+		fprintf(stdout,"Description:\n");
+		fprintf(stdout,"\tDisplays the current memory use and prints the\n");
+		fprintf(stdout,"\tfree list.\n");
+		fprintf(stdout,"Options:\n");
+		fprintf(stdout,"\t--help\t\tdisplay this help and exit\n");
 		return 0;
 	}
 
 	/* Check for valid number of arguments */
 
 	if (nargs > 1) {
-		printf("%s: too many arguments\n", args[0]);
-		printf("Try '%s --help' for more information\n",
+		fprintf(stdout,"%s: too many arguments\n", args[0]);
+		fprintf(stdout,"Try '%s --help' for more information\n",
 				args[0]);
 		return 1;
 	}
@@ -74,14 +74,14 @@ static void printFreeList(void)
 
 
 
-	printf("Free List:\n");
-	printf("Block address  Length (dec)  Length (hex)\n");
-	printf("-------------  ------------  ------------\n");
+	fprintf(stdout,"Free List:\n");
+	fprintf(stdout,"Block address  Length (dec)  Length (hex)\n");
+	fprintf(stdout,"-------------  ------------  ------------\n");
 	
 	for (block = memlist.mnext; block != NULL; block = block->mnext) {
-		printf("  0x%08x    %9d     0x%08x\n", block,
+		fprintf(stdout,"  0x%08x    %9d     0x%08x\n", block,
 			block->mlength, block->mlength);
 	}
-	printf("\n");
+	fprintf(stdout,"\n");
 }
 

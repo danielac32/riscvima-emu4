@@ -19,12 +19,7 @@ struct	dentry	{
 	void    *dvcsr;
 	void    (*dvintr)(void);
 	byte    dvirq;
-		//funciones solo para led
-	//int32 (*dvset) (struct dentry *,bool);
-	//int32 (*dvtoggle) (struct dentry *);
-	//funciones para escribir en la flash
-	//devcall (*dvreadsector) (struct dentry *, void *, uint32 , uint32);
-	//devcall (*dvwritesector) (struct dentry *, void *, uint32 , uint32);
+	int32 pid;
 };
 
 extern	struct	dentry	devtab[]; /* one entry per device */
@@ -34,6 +29,11 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define CONSOLE              0	/* type tty      */
 #define NULLDEV              1	/* type null     */
 #define NAMESPACE            2	/* type nam      */
+#define TELNET1               3
+#define TELNET2               4
+#define TELNET3               5
+#define TELNET4               6
+#define TELNET5               7
 //#define FS                   3	/* type nam      */
 //#define FLASHSPI             4	/* type nam      */
 /* Control block sizes */
@@ -43,10 +43,10 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define	Nnam	1
 #define	Nspi	1
 
-#define NDEVS 3
+#define NDEVS 8
 
 
 /* Configuration and Size Constants */
 
-#define	NPROC	     8		/* number of user processes		*/
-#define	NSEM	     8		/* number of semaphores			*/
+#define	NPROC	     30		/* number of user processes		*/
+#define	NSEM	     30		/* number of semaphores			*/

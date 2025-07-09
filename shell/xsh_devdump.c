@@ -17,18 +17,18 @@ shellcmd xsh_devdump (
 	/* No arguments are expected */
 
 	if (nargs > 1) {
-		//fprintf(stderr, "No arguments allowed\n");
+		fprintf(stderr, "No arguments allowed\n");
 		return 1;
 	}
 
 	/* Walk through device table */
 
-	printf("Device     Name     Minor\n");
-	printf("------ ------------ -----\n");
+	fprintf(stdout,"Device     Name     Minor\n");
+	fprintf(stdout,"------ ------------ -----\n");
 
 	for (i = 0; i < NDEVS; i++) {
 		devptr = &devtab[i];
-		printf("%4d   %-12s %3d\n", i, devptr->dvname,
+		fprintf(stdout,"%4d   %-12s %3d\n", i, devptr->dvname,
 			devptr->dvminor);
 	}
 	return 0;

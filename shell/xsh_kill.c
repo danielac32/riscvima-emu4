@@ -18,20 +18,20 @@ shellcmd xsh_kill(int nargs, char *args[]) {
 	/* Output info for '--help' argument */
 
 	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
-		printf("Usage: %s PID\n\n", args[0]);
-		printf("Description:\n");
-		printf("\tterminates a process\n");
-		printf("Options:\n");
-		printf("\tPID \tthe ID of a process to terminate\n");
-		printf("\t--help\tdisplay this help and exit\n");
+		fprintf(stdout,"Usage: %s PID\n\n", args[0]);
+		fprintf(stdout,"Description:\n");
+		fprintf(stdout,"\tterminates a process\n");
+		fprintf(stdout,"Options:\n");
+		fprintf(stdout,"\tPID \tthe ID of a process to terminate\n");
+		fprintf(stdout,"\t--help\tdisplay this help and exit\n");
 		return OK;
 	}
 
 	/* Check argument count */
 
 	if (nargs != 2) {
-		fprintf(CONSOLE, "%s: incorrect argument\n", args[0]);
-		fprintf(CONSOLE, "Try '%s --help' for more information\n",
+		fprintf(stdout, "%s: incorrect argument\n", args[0]);
+		fprintf(stdout, "Try '%s --help' for more information\n",
 			args[0]);
 		return SYSERR;
 	}
@@ -43,7 +43,7 @@ shellcmd xsh_kill(int nargs, char *args[]) {
 	pid = 0;
 	while(ch != NULLCH) {
 		if ( (ch < '0') || (ch > '9') ) {
-			fprintf(CONSOLE, "%s: non-digit in process ID\n",
+			fprintf(stdout, "%s: non-digit in process ID\n",
 				args[0]);
 			return 1;
 		}
@@ -51,14 +51,14 @@ shellcmd xsh_kill(int nargs, char *args[]) {
 		ch = *chptr++;
 	}
 	if (pid == 0) {
-		fprintf(CONSOLE, "%s: cannot kill the null process\n",
+		fprintf(stdout, "%s: cannot kill the null process\n",
 			args[0]);
 		return 1;
 	}
 
 	retval = kill(pid);
 	if (retval == SYSERR) {
-		fprintf(CONSOLE, "%s: cannot kill process %d\n",
+		fprintf(stdout, "%s: cannot kill process %d\n",
 			args[0], pid);
 		return 1;
 	}

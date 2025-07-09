@@ -43,8 +43,38 @@ struct	dentry	devtab[NDEVS] =
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ioerr, 0,
-	  //(void *)ionull, (void *)ionull
 	},
+	{ 3, 0, "TELNET1",
+      (void *)telnetinit, (void *)telnetopen, (void *)telnetclose,
+      (void *)telnetread, (void *)telnetwrite, (void *)ioerr,
+      (void *)telnetgetc, (void *)telnetputc, (void *)telnetcontrol,
+      (void *)0x0, (void *)ioerr, 0 
+    },
+    { 4, 1, "TELNET2",
+      (void *)telnetinit, (void *)telnetopen, (void *)telnetclose,
+      (void *)telnetread, (void *)telnetwrite, (void *)ioerr,
+      (void *)telnetgetc, (void *)telnetputc, (void *)telnetcontrol,
+      (void *)0x0, (void *)ioerr, 0 
+    },
+    { 5, 2, "TELNET3",
+      (void *)telnetinit, (void *)telnetopen, (void *)telnetclose,
+      (void *)telnetread, (void *)telnetwrite, (void *)ioerr,
+      (void *)telnetgetc, (void *)telnetputc, (void *)telnetcontrol,
+      (void *)0x0, (void *)ioerr, 0 
+    },
+    { 6, 3, "TELNET4",
+      (void *)telnetinit, (void *)telnetopen, (void *)telnetclose,
+      (void *)telnetread, (void *)telnetwrite, (void *)ioerr,
+      (void *)telnetgetc, (void *)telnetputc, (void *)telnetcontrol,
+      (void *)0x0, (void *)ioerr, 0 
+    },
+    { 7, 4, "TELNET5",
+      (void *)telnetinit, (void *)telnetopen, (void *)telnetclose,
+      (void *)telnetread, (void *)telnetwrite, (void *)ioerr,
+      (void *)telnetgetc, (void *)telnetputc, (void *)telnetcontrol,
+      (void *)0x0, (void *)ioerr, 0 
+    },
+
 	/*{ 3, 0, "FS",
 	  (void *)fsinit, (void *)ionull, (void *)ionull,
 	  (void *)ionull, (void *)ionull, (void *)ioerr,
