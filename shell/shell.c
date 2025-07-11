@@ -68,8 +68,9 @@ const	struct	cmdent	cmdtab[] = {
     {"format",  FALSE,  xsh_format},
     {"mv",FALSE,xsh_mv},
     {"cp",FALSE,xsh_cp},
-    {"monkey",FALSE,xsh_monkey}
-	//{"test",    FALSE,  xsh_test},
+    {"monkey",FALSE,xsh_monkey},
+	{"test",    FALSE,  xsh_test},
+	{"tnetstat", FALSE, xsh_tnetstat},
 	//{"aes",     FALSE,  xsh_aes},
 	//{"freq",    FALSE , xsh_freq},
 	//{"test2",    FALSE , xsh_test2},
@@ -127,18 +128,32 @@ process	 shell (
 	bool8	diff;			/* Was difference found during	*/
 	char	*args[SHELL_MAXTOK];	/* Argument vector passed to	*/
 					/*   builtin commands		*/
-    
-    
+    struct	procent	*prptr;	
 
     //queue_init(&ready_queue);
     //n=0;
     //strcpy(path,"/");
     
    //strcpy(cwd,"/");
-   strcpy(path, "/");
+    strcpy(path, "/");
     strcpy(curdir, path);
     
+
+
     did32	dev = atoi(arg[0]);
+    if (open(dev, NULL, NULL) == SYSERR) {
+        printf("ERROR: Could not open\n");
+        return -1;
+    }
+
+	prptr = &proctab[getpid()];
+	prptr->prdesc[0] = dev; /* stdin  is CONSOLE device */
+	prptr->prdesc[1] = dev; /* stdout is CONSOLE device */
+	prptr->prdesc[2] = dev; /* stderr is CONSOLE device */
+
+
+    
+   fprintf(dev, "device: %d\n", dev );
 	/* Print shell banner and startup message */
 
 
@@ -163,16 +178,25 @@ process	 shell (
 	//struct dentry	*devptr;	
 	//struct	ttycblk	*typtr;	
 	//struct	procent	*prptr;
-    struct	procent	*prptr;	
+    
 
 	while (1) {
 
 		/* Display prompt */
 		fprintf(dev,SHELL_PROMPT);
+        
 
-         
-       
-		len = read(dev, buf, sizeof(buf));
+        
+ 
+		len = read(dev, buf, sizeof(buf)-1);
+
+		/*while (len > 0 && (buf[len-1] == '\n' || buf[len-1] == '\r')) {
+	        len--;
+	        yield();
+	    }*/
+       // buf[len] = '\0'; // Asegurar terminación nula
+
+
         /*while(!kbhit()){
                yield();
         	//sleep(0);
@@ -186,6 +210,7 @@ process	 shell (
 		if (len == EOF) {
 			break;
 		}
+		if (len == -2)break;
 
 		/* If line contains only NEWLINE, go to next line */
 
@@ -198,7 +223,9 @@ process	 shell (
 		ntok = lexan(buf, len, tokbuf, &tlen, tok, toktyp);
 
 		/* Handle parsing error */
+        
 
+        //fprintf(stdout, "%s %d\n",buf,len );
 		if (ntok == SYSERR) {
 			fprintf(dev,"%s\n", SHELL_SYNERRMSG);
 			continue;
@@ -260,7 +287,7 @@ process	 shell (
 		}
 
 		/* Handle command not found */
-
+     
 		if (j >= ncmd) {
 			fprintf(dev, "command %s not found\n", tokbuf);
 			continue;
@@ -284,8 +311,7 @@ process	 shell (
 
 				/* Call builtin shell function */
 
-				if ((*cmdtab[j].cfunc)(ntok, args)
-							== SHELL_EXIT) {
+				if ((*cmdtab[j].cfunc)(ntok, args) == SHELL_EXIT) {
 					break;
 				}
 			}
@@ -293,33 +319,12 @@ process	 shell (
 		}
  
 		 
-		/* Spawn child thread for non-built-in commands */
-
-		/*child = create(cmdtab[j].cfunc,
-			SHELL_CMDSTK, SHELL_CMDPRIO,
-			cmdtab[j].cname, 2, ntok, tok);*/
-
- 
-        //child = createFromShell(SHELL_CMDSTK, SHELL_CMDPRIO,cmdtab[j].cname);
-
-        //prptr = &proctab[child];
-        //uint32 *saddr = prptr->prstkbase;
-        //saddr += SHELL_CMDSTK;
-
-
-        //prptr->prstkptr = setupStackFromShell(prptr->prstkbase+SHELL_CMDSTK, cmdtab[j].cfunc, INITRET, ntok, args);
-
-
 
         child = createFromShell(cmdtab[j].cfunc,
 			SHELL_CMDSTK*2, SHELL_CMDPRIO,
 			cmdtab[j].cname, ntok, args);
 
-
-        /*child = create(cmdtab[j].cfunc,
-			SHELL_CMDSTK, SHELL_CMDPRIO,
-			cmdtab[j].cname, 2, ntok, tok);*/
-
+ 
 		/* If creation or argument copy fails, report error */
   
 		if ((child == SYSERR)) {
@@ -328,8 +333,9 @@ process	 shell (
 		}
 		/* Set stdinput and stdoutput in child to redirect I/O */
 
-		proctab[child].prdesc[0] = stdinput;
-		proctab[child].prdesc[1] = stdoutput;
+		proctab[child].prdesc[0] = dev;
+		proctab[child].prdesc[1] = dev;
+		proctab[child].prdesc[3] = dev;
 
 
         msg = recvclr();

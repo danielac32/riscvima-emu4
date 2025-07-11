@@ -1,6 +1,7 @@
 #include <disk.h>
 #include <stdio.h>
 #include <os.h>
+#include <syscall.h>
 
  
 

@@ -33,7 +33,7 @@ int  initFat32(){
       // Attach media access functions to library
 	if (fl_attach_media(sd_readsector, sd_writesector) != FAT_INIT_OK)
 	{
-	      printf("ERROR: Failed to init file system\n");
+	    printf("ERROR: Failed to init file system\n");
         if (fl_format(size, "")){
             kprintf("format ok\n");
             goto init;
@@ -72,7 +72,7 @@ char num[10];
 sprintf(num, "%d", CONSOLE);
 resume(create(shell, 2048*2, 50, "shell", 1,num));
 //resume(create(telnet, 2048*2, 10, "telnet-server", 0));
-resume(create((void *)telnet2, 2048*2, 10, "telnet-server", 0));
+resume(create((void *)telnet, 2048*2, 10, "telnet-server", 0));
 return 0;
 }
 

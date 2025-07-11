@@ -3,11 +3,12 @@
 #PREFIX:=riscv64-unknown-elf-
 #CFLAGS:=-I/usr/include
 #export PATH=/opt/riscv/bin:$PATH
-TOOLSET     ?= riscv32-unknown-elf-
+TOOLSET     ?= riscv32-unknown-linux-gnu-
 CC           = $(TOOLSET)gcc
 LD           = $(TOOLSET)ld
 AR           = $(TOOLSET)gcc-ar
 OBJCOPY      = $(TOOLSET)objcopy
+OBJDUMP =$(TOOLSET)objdump
 OPTFLAGS    ?= -Og
  
 
@@ -70,7 +71,7 @@ $(OBJDIR):
 
 
 kernel:  $(DOUT).bin
-		riscv32-unknown-elf-objdump -d kernel.elf > kernel.list
+		$(OBJDUMP) -d kernel.elf > kernel.list
 
 
 $(DOUT).bin : $(DOUT).elf

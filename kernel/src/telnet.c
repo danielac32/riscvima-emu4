@@ -28,8 +28,8 @@ int telnet_close(int client_id) {
 }
 
 
-#define MAX_TELNET_CLIENTS 5
-#define BUFFER_SIZE 128
+//#define MAX_TELNET_CLIENTS 5
+//#define BUFFER_SIZE 128
 /*
 int telnet(int nargs, char *args[]) {
     printf("Esperando clientes...\n");
@@ -173,7 +173,7 @@ int telnet(int nargs, char *args[]) {
 
 
 
-
+#if 0
 
 #define MAX_CLIENTS 20
 #define TELNET_STACKSIZE 4096
@@ -349,26 +349,18 @@ int telnet(int nargs, char *args[]) {
     return OK;
 }
 
-
+#endif
 
 static int assign_client_to_device(int client_id);
  
-
+ 
 void telnet_client_task(int nargs, char *args[]);
 
 
-void telnet2(int nargs, char *args[]) {
+void telnet(int nargs, char *args[]) {
     // Inicializar estructuras
-    server_mutex = semcreate(1);
+    //server_mutex = semcreate(1);
     
-    /*for (int i = 0; i < MAX_TELNET_DEVICES; i++) {
-        ttytel[i].sem = semcreate(1);
-        ttytel[i].client_id = -1;
-        ttytel[i].active = FALSE;
-        ttytel[i].owner = -1;
-        ttytel[i].assigned = FALSE;
-    }*/
-
     // Inicializar solo dispositivos TELNET
     for (int i = 0; i < NDEVS; i++) {
         if (strncmp(devtab[i].dvname, "TELNET", 6) == 0) {
@@ -411,18 +403,20 @@ void telnet2(int nargs, char *args[]) {
             
             // Crear tarea para este cliente
             char task_name[16];
-            sprintf(task_name, "Client_%s", devname);
+            sprintf(task_name, "SHELL_%s", devname);
             
             char devnum_str[4];
             sprintf(devnum_str, "%d", devnum);
             
-            pid32 task = create((void *)telnet_client_task,
-                              4096,
-                              40,
-                              task_name,
-                              1,
-                              devnum_str);
-            
+            struct  procent *prptr;
+            pid32 task = create(shell,4096,40,task_name,1,devnum_str);
+            prptr = &proctab[task];
+
+            prptr->prdesc[0] = devnum; /* stdin  is CONSOLE device */
+            prptr->prdesc[1] = devnum; /* stdout is CONSOLE device */
+            prptr->prdesc[2] = devnum; /* stderr is CONSOLE device */
+
+
             if (task != SYSERR) {
                 resume(task);
                // printf("Created task %d for %s\n", task, devname);
@@ -446,7 +440,7 @@ void telnet2(int nargs, char *args[]) {
 
 
 int assign_client_to_device(int client_id) {
-    wait(server_mutex);
+    //wait(server_mutex);
     
     // Buscar por número de dispositivo (no por índice)
     for (int i = 0; i < NDEVS; i++) {
@@ -461,22 +455,22 @@ int assign_client_to_device(int client_id) {
             continue;
         }
         
-        wait(ttytel[index].sem);
+       // wait(ttytel[index].sem);
         
         if (!ttytel[index].assigned) {
             ttytel[index].client_id = client_id;
             ttytel[index].assigned = TRUE;
             ttytel[index].active = TRUE;
             
-            signal(ttytel[index].sem);
-            signal(server_mutex);
+           // signal(ttytel[index].sem);
+           // signal(server_mutex);
             return i; // Devuelve el número de dispositivo real
         }
         
-        signal(ttytel[index].sem);
+       // signal(ttytel[index].sem);
     }
     
-    signal(server_mutex);
+   // signal(server_mutex);
     return -1; // No hay dispositivos disponibles
 }
 
@@ -554,14 +548,14 @@ void telnet_client_task(int nargs, char *args[]) {
     // Limpieza antes de terminar
     close(devnum);
     
-    wait(ttytel[index].sem);
+   /* wait(ttytel[index].sem);
     if (ttytel[index].active) {
         telnet_close(ttytel[index].client_id);
         ttytel[index].active = FALSE;
         ttytel[index].assigned = FALSE;
         ttytel[index].client_id = -1;
     }
-    signal(ttytel[index].sem);
+    signal(ttytel[index].sem);*/
     
     printf("%s client task ending\n", devname);
 }

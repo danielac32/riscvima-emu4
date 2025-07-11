@@ -6,6 +6,7 @@
  
 
 shellcmd xsh_test(int nargs, char *args[]){
+  
   Byte block[16]={1, 2, 3, 4, 5, 6, 7, 8, 9, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16}; 
   Byte block2[16];
   memcpy(block2, block, 16);
@@ -32,7 +33,28 @@ shellcmd xsh_test(int nargs, char *args[]){
     }
   }
   fprintf(stdout,"OK.\n");
-  return 0;
-  
+
+
      
+
+    
+ 
+    
+    // Debug: Mostrar información de los descriptores
+    fprintf(stdout, "\n=== Debug de descriptores ===\n");
+    fprintf(stdout, "PID: %d\n", getpid());
+    fprintf(stdout, "stdin: %d\n", proctab[getpid()].prdesc[0]);
+    fprintf(stdout, "stdout: %d\n", proctab[getpid()].prdesc[1]);
+    fprintf(stdout, "stderr: %d\n", proctab[getpid()].prdesc[2]);
+    fprintf(stdout, "extra: %d\n", proctab[getpid()].prdesc[3]);
+    fprintf(stdout, "===========================\n\n");
+
+    // Prueba de salida continua
+    for(int i = 0; i < 100; i++) {
+        fprintf(stdout, "Mensaje %d desde test (PID: %d)\n", i, getpid());
+        sleepms(5);
+    }
+
+    return 0;
 }
+

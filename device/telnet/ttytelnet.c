@@ -42,34 +42,50 @@ devcall telnetopen(struct dentry *devptr, char *name, char *mode) {
     }
     
     // Solo permitir un proceso dueño a la vez
-    if (ttytel[minor].owner != -1 && ttytel[minor].owner != getpid()) {
+    /*if (ttytel[minor].owner != -1 && ttytel[minor].owner != getpid()) {
         signal(ttytel[minor].sem);
         return SYSERR;
-    }
+    }*/
+
     
     ttytel[minor].owner = getpid();
     signal(ttytel[minor].sem);
-    
+
     return OK;
 }
 
 devcall telnetclose(struct dentry *devptr) {
+
     int minor = devptr->dvminor;
+    //fprintf(CONSOLE,"%d client task ending\n",ttytel[minor].client_id);
     if (minor < 0 || minor >= MAX_TELNET_DEVICES) {
         return SYSERR;
     }
     
     wait(ttytel[minor].sem);
     
-    if (ttytel[minor].owner != getpid()) {
+    /*if (ttytel[minor].owner != getpid()) {
         signal(ttytel[minor].sem);
         return SYSERR;
+    }*/
+    
+
+    if (ttytel[minor].owner == getpid()) {
+        telnet_close(ttytel[minor].client_id);
+        ttytel[minor].active = FALSE;
+        ttytel[minor].assigned = FALSE;
+        ttytel[minor].client_id = -1;
+        ttytel[minor].owner = -1;
     }
-    
+
     // No cerramos la conexión, solo liberamos el ownership
-    ttytel[minor].owner = -1;
-    
+    /*ttytel[minor].owner = -1;
+    telnet_close(ttytel[minor].client_id);
+    ttytel[minor].active = FALSE;
+    ttytel[minor].assigned = FALSE;
+    ttytel[minor].client_id = -1;*/
     signal(ttytel[minor].sem);
+    //semdelete(ttytel[minor].sem);
     return OK;
 }
 
@@ -80,19 +96,47 @@ devcall telnetread(struct dentry *devptr, void *buf, uint32 len) {
         return SYSERR;
     }
     
-    wait(ttytel[minor].sem);
-    
-    if (ttytel[minor].owner != getpid() || !ttytel[minor].active) {
-        signal(ttytel[minor].sem);
+    // Adquirir semáforo con timeout para evitar deadlocks
+    if (wait(ttytel[minor].sem) == SYSERR) {
         return SYSERR;
     }
     
-    int bytes = telnet_recv(ttytel[minor].client_id, buf, len);
+    // Verificar ownership y estado
+    /*if (ttytel[minor].owner != getpid() || !ttytel[minor].active) {
+        signal(ttytel[minor].sem);
+        return SYSERR;
+    }*/
+    
+    char *char_buf = (char *)buf;  // Cast a char* para manipulación de bytes
+    int bytes = 0;
+    int attempts = 0;
+    const int max_attempts = 50;  // Máximo de intentos
+    
+    while (attempts < max_attempts) {
+        bytes = telnet_recv(ttytel[minor].client_id, char_buf, len);
+        
+        // Si recibimos datos, procesarlos
+        if (bytes > 0) {
+            // Eliminar CR/LF del final si existen
+            while (bytes > 0 && (char_buf[bytes-1] == '\n' || char_buf[bytes-1] == '\r')) {
+                char_buf[--bytes] = '\0';  // Eliminar y terminar con null
+            }
+            break;
+        }
+        
+        // Si no hay datos, esperar un poco
+        signal(ttytel[minor].sem);  // Liberar durante la espera
+        sleepms(100);              // Esperar 100ms
+        wait(ttytel[minor].sem);    // Re-adquirir antes de continuar
+        attempts++;
+    }
     
     signal(ttytel[minor].sem);
-    return (bytes < 0) ? SYSERR : bytes;
+    
+    // Devolver bytes leídos (0 si timeout, SYSERR si error)
+    return (bytes > 0) ? bytes : 
+          (attempts >= max_attempts) ? 0 : SYSERR;
 }
-
 
 
 devcall telnetwrite(struct dentry *devptr, void *buf, uint32 len) {
@@ -103,10 +147,10 @@ devcall telnetwrite(struct dentry *devptr, void *buf, uint32 len) {
     
     wait(ttytel[minor].sem);
     
-    if (ttytel[minor].owner != getpid() || !ttytel[minor].active) {
+    /*if (ttytel[minor].owner != getpid() || !ttytel[minor].active) {
         signal(ttytel[minor].sem);
         return SYSERR;
-    }
+    }*/
     
     int bytes = telnet_send(ttytel[minor].client_id, buf, len);
     

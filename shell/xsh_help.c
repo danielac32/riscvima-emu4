@@ -27,6 +27,9 @@ shellcmd xsh_help(int nargs, char *args[])
 	
 	/* For argument '--help', emit help about the 'help' command	*/
 
+
+   ///int _stdout	= ((proctab[getpid()]).prdesc[1]);
+
 	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
 
 		fprintf(stdout,"Use:\n");
@@ -38,7 +41,7 @@ shellcmd xsh_help(int nargs, char *args[])
 		fprintf(stdout,"\tcommand\tspecific command for which to\n");
 		fprintf(stdout,"\t\tdisplay help information\n");
 		fprintf(stdout,"\t--help\tdisplay this help and exit\n");
-		return 0;
+		return OK;
 	}
      
 	/* Check for valid number of arguments */
@@ -47,7 +50,7 @@ shellcmd xsh_help(int nargs, char *args[])
 		fprintf(stdout, "%s: too many arguments\n", args[0]);
 		fprintf(stdout, "Try '%s --help' for more information\n",
 				args[0]);
-		return 1;
+		return OK;
 	}
 
 	/* Output help for specific command given as an argument */
@@ -72,10 +75,10 @@ shellcmd xsh_help(int nargs, char *args[])
 			argv[0] = args[1];
 			argv[1] = "--help";
 			(*cmdtab[i].cfunc) (2, argv);
-			return 0;
+			return OK;
 		}
 		fprintf(stdout,"%s: no such command as '%s'\n", args[0], args[1]);
-		return 1;
+		return OK;
 	}
 
 	/* No arguments -- print a list of shell commands */
@@ -120,5 +123,5 @@ shellcmd xsh_help(int nargs, char *args[])
 		}
 		fprintf(stdout,"\n");
 	}
-	return 0;
+	return OK;
 }

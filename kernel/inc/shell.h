@@ -21,7 +21,7 @@
 #define SHELL_BAN5      "    / /\\ \\    _| |_   | \\   |  | |  | |   "
 #define SHELL_BAN6      "   / /  \\ \\  |     |  | | \\ |  \\  --  /   "
 #define SHELL_BAN7      "   --    --   -----    -   -     ----     "
-#define SHELL_BAN8	"       RISCV32IMAC Version by Daniel Quintero	   "
+#define SHELL_BAN8	"       RISCV32IMA Version by Daniel Quintero	   "
 #define SHELL_BAN9      "------------------------------------------"
 #define	SHELL_BAN10	"\033[0m\n"
 

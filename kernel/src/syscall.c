@@ -88,8 +88,7 @@ struct irq_context *do_syscall(struct irq_context *ctx)
             
         break;
         case OS_MALLOC:
-            ctx->reg[REG_RET] = malloc(a0);
-            kprintf("malloc\n");
+            ctx->reg[REG_RET] = (uint32_t)malloc(a0);
             //
         break;
 

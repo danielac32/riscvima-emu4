@@ -25,7 +25,7 @@ extern const char _ctype_[];
 #define isprint(c)   ((_ctype_+1)[(int)c]&(_P|_U|_L|_N|_S))
 #define iscntrl(c)   ((_ctype_+1)[(int)c]&_C)
 #define isascii(c)   ((unsigned)((int)(c))<=0x7F)
-
+#define isblank(c)   (c == ' ' || c == '\t')
 #define toupper(c)   (((int)(c))-'a'+'A')
 #define tolower(c)   (((int)(c))-'A'+'a')
 #define toascii(c)   (((int)(c))&0x7F)

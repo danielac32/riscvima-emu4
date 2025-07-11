@@ -281,9 +281,19 @@ syscall	kill(
 	}
 
 	send(prptr->prparent, pid);
-	//for (i=0; i<3; i++) {
-	//	close(prptr->prdesc[i]);
-	//}
+
+	for (i=0; i<3; i++) {
+		close(prptr->prdesc[i]);
+	}
+	/*for (i = 0; i < NDESC; i++) {
+        if (i < 3 && prptr->prparent != -1) {
+
+            if (proctab[prptr->prparent].prdesc[i] == prptr->prdesc[i]) {
+                continue;  // Saltar cierre de descriptores heredados
+            }
+        }
+        close(prptr->prdesc[i]);
+    }*/
 	freestk(prptr->prstkbase, prptr->prstklen);
 	//free(prptr->prstkbase);
     if(prptr->elf == TRUE){
