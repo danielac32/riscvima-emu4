@@ -375,8 +375,8 @@ static uint32_t HandleOtherReturnSyscall(uint16_t csrno, uint32_t a0, uint32_t a
                     if (client_socks[i] == 0) {
                         client_socks[i] = fd;
                         
-                        const char *banner = "\r\nBienvenido al servidor Xinu (PC)\r\n$ ";
-                        send(fd, banner, strlen(banner), 0);
+                        //const char *banner = "\r\nBienvenido al servidor Xinu (PC)\r\n$ ";
+                        //send(fd, banner, strlen(banner), 0);
                         
                         //printf("New TELNET client (ID=%d)\n", i);
                         return i;

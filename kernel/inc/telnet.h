@@ -12,8 +12,8 @@ struct ttytelnet {
     bool active;        // Estado de conexión
     pid32 owner;        // Proceso que tiene abierto el dispositivo
     bool assigned;      // Si el dispositivo tiene un cliente asignado
-    char input_buffer[256]; // Buffer para entrada
-    char output_buffer[256]; // Buffer para salida
+    //char input_buffer[256]; // Buffer para entrada
+    //char output_buffer[256]; // Buffer para salida
 };
 extern struct ttytelnet ttytel[];
-static sid32 global_mutex;  // Semáforo global para inicialización
+static sid32 server_mutex;  // Semáforo global para inicialización

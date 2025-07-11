@@ -145,7 +145,7 @@ devcall telnetcontrol(struct dentry *devptr, int32 func, int32 arg1, int32 arg2)
             break;
             
         case TELNET_CTRL_SET_TIMEOUT:
-            signal(tty->sem);
+            signal(ttytel->sem);
             ret = OK;
             break;
             
