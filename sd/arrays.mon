@@ -1,0 +1,10 @@
+// arrays.mon - Manejo de listas
+let frutas = ["manzana", "banana", "naranja"];
+
+puts("Frutas:");
+for (let i = 0; i < len(frutas); i = i + 1) {
+    puts(frutas[i]);
+}
+
+array_push(frutas, "mango");
+puts("Última fruta:", frutas[len(frutas) - 1]);

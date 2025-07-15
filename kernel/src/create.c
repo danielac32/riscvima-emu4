@@ -704,7 +704,7 @@ status	ready(
  *  exit  -  Cause the calling process to exit
  *------------------------------------------------------------------------
  */
-void	exit(int r)
+void	exit()
 {
 	kill(getpid());		/* Kill the current process */
 }

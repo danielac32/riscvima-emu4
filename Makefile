@@ -3,7 +3,7 @@
 #PREFIX:=riscv64-unknown-elf-
 #CFLAGS:=-I/usr/include
 #export PATH=/opt/riscv/bin:$PATH
-TOOLSET     ?= riscv32-unknown-linux-gnu-
+TOOLSET     ?= riscv32-unknown-elf-
 CC           = $(TOOLSET)gcc
 LD           = $(TOOLSET)ld
 AR           = $(TOOLSET)gcc-ar
@@ -17,7 +17,7 @@ fixpath = $(strip $1)
 
  
 CFLAGS      ?=  -march=rv32ima -mabi=ilp32 -ffreestanding -nostartfiles  -Os
-INCLUDES     =  -I include -I arch/riscv -I sys -I kernel/inc -I fat32/Inc -I interpreter/monkey/inc
+INCLUDES     =  -I include -I arch/riscv -I sys -I kernel/inc -I fat32/Inc -I interpreter/monkey/inc -I tinyscript
 LDSCRIPT     =  arch/riscv/linker.ld
 
 OBJDIR        = obj
@@ -40,15 +40,15 @@ SHELLOBJ      = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SR
 SRCFAT32         = $(wildcard fat32/Src/*.c)  $(wildcard tinyscript/*.c) $(wildcard cc/*.c) #$(wildcard basic/*.c) 
 FAT32OBJ         = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCFAT32)))))
 
-SRCBASIC     =  $(wildcard basic/*.c) 
-OBJBASIC     =  $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCBASIC)))))
+SRCBASIC     =  #$(wildcard basic/*.c) 
+OBJBASIC     =  #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCBASIC)))))
 
 
-SRCMONKEY      =  $(wildcard interpreter/monkey/src/*.c) 
-MONKEYOBJ      =  $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
+SRCMONKEY      =   #$(wildcard interpreter/monkey/src/*.c)
+MONKEYOBJ      =  #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
 
-SRCPEPPER      = $(wildcard interpreter/pepper-lang/*.c) 
-PEPPEROBJ      = $(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))#$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
+SRCPEPPER      = #$(wildcard interpreter/pepper-lang/*.c) 
+PEPPEROBJ      = #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))#$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(SRCMONKEY)))))
 
 FSLIB         = #$(wildcard littlefs/*.c)
 FSOBJ         = #$(addprefix $(OBJDIR)/, $(addsuffix .o, $(notdir $(basename $(FSLIB)))))

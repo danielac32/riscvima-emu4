@@ -1,6 +1,6 @@
 #include <os.h>
 #include <fat_filelib.h>
-
+#if 0
 #define FS_MAXSIZE	8192
 #define STACKSIZE	32
 
@@ -45,7 +45,7 @@ void error(char *msg){
 			if(*t=='\n') ++ln;
 			++t;
 		}
-		printf("\nERROR: %s: line %d.\n", msg, ln+1);
+		fprintf(stdout,"\nERROR: %s: line %d.\n", msg, ln+1);
 	}
 }
 
@@ -172,7 +172,7 @@ void parseString(){
 	if(*p=='"'){
 		++p;
 		while(*p!='"' && *p!='\n' && *p!='\0'){
-			printf("%c", *p++);
+			fprintf(stdout,"%c", *p++);
 		}
 		if(*p!='"') error("Syntax error");
 		else ++p;
@@ -183,17 +183,17 @@ void parsePrint(){
 	while(1){
 		skipSpaces();
 		if(*p=='"') parseString();
-		else printf("%d", parseExpression());
+		else fprintf(stdout,"%d", parseExpression());
 		skipSpaces();
 		if(*p==',') ++p;
 		else break;
 	}
 	if(*p==';') ++p;
-	else printf("\n");
+	else fprintf(stdout,"\n");
 }
 
 void parseEnd(){
-	printf("\n");
+	fprintf(stdout,"\n");
 	if(*p!='\n' && *p!=0) error("Syntax error");
 	else err=1;
 }
@@ -233,7 +233,7 @@ void parseIf(){
 	}
 	skipSpaces();		
 	if(strncmp(p, "then ", 5)!=0){
-		printf("%s\n",p );
+		fprintf(stdout,"%s\n",p );
 		error("Syntax error if");
 		return;
 	}
@@ -320,9 +320,9 @@ int value;
 	skipSpaces();
 
     if(strncmp(p, "to ", 2)!=0){
-		printf("%s\n",p );
+		fprintf(stdout,"%s\n",p );
 		error("Syntax error for(to)");
-		printf("%s\n",p );
+		fprintf(stdout,"%s\n",p );
 		return;
 	}
 	p+=2;
@@ -388,7 +388,7 @@ void parseList(){
 				   s[count++]=*p++;
 			}
 			s[count]='\0';
-			printf("%s\n",s );
+			fprintf(stdout,"%s\n",s );
          {
          	 /*char buff[256];
 			    strcpy(buff, s);
@@ -397,13 +397,13 @@ void parseList(){
 			if(*p!='"') error("Syntax error");
 			else ++p;
 
-		}else printf("%d", parseExpression());
+		}else fprintf(stdout,"%d", parseExpression());
 		skipSpaces();
 		if(*p==',') ++p;
 		else break;
 	}
 	if(*p==';') ++p;
-	else printf("\n");
+	else fprintf(stdout,"\n");
 }
 
 
@@ -467,7 +467,7 @@ void parseStatment(){
 int basic(int argc, char **argv){
 	FILE *f;
 	if(argc!=2){
-		printf("WARNING: Illegal arguments. Usage: tb [file]\n");
+		fprintf(stdout,"WARNING: Illegal arguments. Usage: tb [file]\n");
 		return 1;
 	}
 
@@ -475,7 +475,7 @@ int basic(int argc, char **argv){
     if (tmp==NULL)return 1;
 
 	if(!(f=fopen(tmp, "rb"))){
-		printf("WARNING: File not exist.\n");
+		fprintf(stdout,"WARNING: File not exist.\n");
 		return 2;
 	}
    
@@ -516,3 +516,4 @@ factor := var|num|(expr)
 str := "..."
 label := ...
 */
+#endif

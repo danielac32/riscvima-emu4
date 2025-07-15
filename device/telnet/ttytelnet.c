@@ -110,7 +110,7 @@ devcall telnetread(struct dentry *devptr, void *buf, uint32 len) {
     char *char_buf = (char *)buf;  // Cast a char* para manipulación de bytes
     int bytes = 0;
     int attempts = 0;
-    const int max_attempts = 50;  // Máximo de intentos
+    const int max_attempts = 200;  // Máximo de intentos
     
     while (attempts < max_attempts) {
         bytes = telnet_recv(ttytel[minor].client_id, char_buf, len);
@@ -126,7 +126,7 @@ devcall telnetread(struct dentry *devptr, void *buf, uint32 len) {
         
         // Si no hay datos, esperar un poco
         signal(ttytel[minor].sem);  // Liberar durante la espera
-        sleepms(100);              // Esperar 100ms
+        sleepms(10);              // Esperar 100ms
         wait(ttytel[minor].sem);    // Re-adquirir antes de continuar
         attempts++;
     }

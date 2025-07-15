@@ -1,4 +1,4 @@
-
+#if 0
 #include <os.h>
 #include <fat_filelib.h>
 
@@ -105,3 +105,4 @@ shellcmd xsh_monkey(int nargs, char *args[]){
     free(input);
 return 0;
 }
+#endif

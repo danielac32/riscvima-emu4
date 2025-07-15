@@ -1,0 +1,12 @@
+// fibonacci.mon - Función recursiva
+let fib = fn(n) {
+    if (n <= 1) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+};
+
+puts("Fibonacci(0): ", fib(0));
+puts("Fibonacci(1): ", fib(1));
+puts("Fibonacci(5): ", fib(5));
+puts("Fibonacci(10): ", fib(10));

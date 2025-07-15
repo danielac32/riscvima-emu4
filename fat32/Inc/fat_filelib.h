@@ -69,7 +69,7 @@ typedef struct sFL_FILE
 #define FILE_BINARY         (1 << 3)
 #define FILE_ERASE          (1 << 4)
 #define FILE_CREATE         (1 << 5)
-
+    int sem;
     struct fat_node         list_node;
 } FL_FILE;
 

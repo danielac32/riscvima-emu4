@@ -22,7 +22,7 @@
 
 // Max open files (reduce to lower memory requirements)
 #ifndef FATFS_MAX_OPEN_FILES
-    #define FATFS_MAX_OPEN_FILES            3
+    #define FATFS_MAX_OPEN_FILES            5
 #endif
 
 // Number of sectors per FAT_BUFFER (min 1)

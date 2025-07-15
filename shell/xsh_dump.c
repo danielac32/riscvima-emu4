@@ -10,10 +10,10 @@ shellcmd xsh_dump(int nargs, char *args[]){
 FILE* fd;
  
     char *tmp=full_path(args[1]);
-    printf("%s\n",tmp );
+    //printf("%s\n",tmp );
     if (tmp==NULL)return -1;
     if (!(fd = fopen(tmp,"r"))){
-        printf("%s not found\n", tmp);
+        fprintf(stdout,"%s not found\n", tmp);
         return -1;
     }
     uint8 buff[32];
@@ -22,7 +22,7 @@ FILE* fd;
     unsigned int fileLength = ftell(fd);
     fseek(fd, 0, SEEK_SET);
 
-    printf("size file %d\n",fileLength);
+    fprintf(stdout,"size file %d\n",fileLength);
 
     while(part<fileLength){
          //syscallp.seek(fs,part,LFS_SEEK_SET);

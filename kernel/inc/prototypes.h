@@ -1,7 +1,7 @@
 
 //#include <stdio.h>
 
-extern void exit(int);
+extern void exit();
  
 /* in file chprio.c */
 extern	pri16	chprio(pid32, pri16);

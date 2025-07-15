@@ -39,7 +39,7 @@ char* full_path(const char* name) {
     return path;
 }
 
-
+extern int tinyscript(int argc, char *argv[]);
 /************************************************************************/
 /* Table of Xinu shell commands and the function associated with each	*/
 /************************************************************************/
@@ -68,9 +68,10 @@ const	struct	cmdent	cmdtab[] = {
     {"format",  FALSE,  xsh_format},
     {"mv",FALSE,xsh_mv},
     {"cp",FALSE,xsh_cp},
-    {"monkey",FALSE,xsh_monkey},
+    //{"monkey",FALSE,xsh_monkey},
 	{"test",    FALSE,  xsh_test},
 	{"tnetstat", FALSE, xsh_tnetstat},
+	{"ts",FALSE,tinyscript}
 	//{"aes",     FALSE,  xsh_aes},
 	//{"freq",    FALSE , xsh_freq},
 	//{"test2",    FALSE , xsh_test2},

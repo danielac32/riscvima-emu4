@@ -1,5 +1,5 @@
 //extern shellcmd xsh_rdstest(int nargs, char *args[]);
-
+extern shellcmd xsh_cc(int argc, char *argv[]);
 extern shellcmd xsh_tnetstat(int nargs, char *args[]);
 extern shellcmd xsh_monkey(int nargs, char *args[]);
 extern shellcmd xsh_cp(int nargs, char *args[]);
