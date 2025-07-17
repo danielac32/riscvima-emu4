@@ -1,6 +1,6 @@
 //extern sem_t sem_load_elf;
 #include <stdbool.h>
-//#include <stdint.h>
+#include <stdint.h>
 typedef struct {
     void *img;
 } program_img;

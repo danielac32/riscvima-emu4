@@ -119,6 +119,23 @@ fs:
 
 
 all:
+	make clean
 	make kernel
 	make riscv
 	make run
+
+
+hello:
+	clear
+	$(CC) -O0 -c -o app/lib/boot.o   -march=rv32ima -mabi=ilp32   app/lib/boot.S -fpic
+	$(CC) -O0 -c -o app/hello/main.o   -march=rv32ima -mabi=ilp32   app/hello/main.c -fpic
+	$(LD) app/lib/boot.o app/hello/main.o -nostdlib -T app/lib/link.ld  -o app/hello/hello.elf 
+	$(OBJDUMP) -d app/hello/hello.elf
+	#$(CC)-strip  -s -o mkfs/kernel/shell/shell.elf mkfs/kernel/shell/shell.elf
+
+
+
+to:
+	gcc -o to convert/*.c
+	./to app/hello/hello.elf
+	rm to
